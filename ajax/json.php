@@ -1,7 +1,5 @@
 <?php
 include ('../init.php');
-session_start();
-error_reporting(7);
 
 header("Expires: Mon, 26 Jul 1997 05:00:00 GMT" );
 header("Last-Modified: " . gmdate( "D, d M Y H:i:s" ) . "GMT" );
@@ -66,6 +64,51 @@ elseif ($_REQUEST['action'] == 'select_bld')	{
 	$dati = rs::inMatrix($query);
 	echo json_encode($dati);
 }
+
+/**
+ * Restituisce l'elenco degli anni per cui ci sono valori da convalidare
+ */
+elseif ($_REQUEST['action'] == 'select_years')	{
+
+	$bld = $_REQUEST['bld'];
+	if($_REQUEST['filter']=='true')
+		$filter = 'AND msoutputs.CNPVM2 IS NULL';
+
+
+		$query = "SELECT ANNO_MS AS optionValue, ANNO_MS AS optionDisplay FROM measures
+					LEFT JOIN msoutputs USING(ID_MEASURE)
+					LEFT JOIN meters USING(ID_METER)
+					WHERE ID_BUILDING = $bld $filter
+					GROUP BY ANNO_MS";
+
+
+	$dati = rs::inMatrix($query);
+	echo json_encode($dati);
+}
+
+
+/**
+ * Restituisce l'elenco degli invii per un determinato anno per cui ci sono valori da convalidare
+ */
+elseif ($_REQUEST['action'] == 'select_uploadtype')	{
+
+	$bld = $_REQUEST['bld'];
+	$anno = $_REQUEST['y'];
+	if($_REQUEST['filter']=='true')
+		$filter = 'AND msoutputs.CNPVM2 IS NULL';
+
+
+	$query = "SELECT ID_UPLOADTYPE AS optionValue, ID_UPLOADTYPE AS optionDisplay FROM measures
+	LEFT JOIN msoutputs USING(ID_MEASURE)
+	LEFT JOIN meters USING(ID_METER)
+	WHERE ID_BUILDING = $bld AND ANNO_MS=$anno $filter
+	GROUP BY ID_UPLOADTYPE";
+
+
+	$dati = rs::inMatrix($query);
+	echo json_encode($dati);
+}
+
 
 
 elseif ($_REQUEST['action'] == 'select_flat')	{
@@ -325,8 +368,8 @@ elseif ($_REQUEST['action'] == 'put_outputs'){
 	
 	if(array_key_exists('OCCUPIED', $_REQUEST)){
 		$is_occupied = $_REQUEST['OCCUPIED'] == 'true' ? '1' : '0';
-
-		$qRep = "REPLACE INTO occupancys (ID_FLAT, IS_OCCUPIED, ID_UPLOADTYPE, ANNO_MS) VALUES ('{$_REQUEST['ID_FLAT']}', '$is_occupied', '{$rms['ID_UPLOADTYPE']}', '{$rms['ANNO_MS']}' )";
+		$occupancy = $_REQUEST['OCCUPANCY'];
+		$qRep = "REPLACE INTO occupancys (ID_FLAT, IS_OCCUPIED, OCCUPANCY, ID_UPLOADTYPE, ANNO_MS) VALUES ('{$_REQUEST['ID_FLAT']}', '$is_occupied', '$occupancy', '{$rms['ID_UPLOADTYPE']}', '{$rms['ANNO_MS']}' )";
 		mysql_query($qRep);	
 	}
 
@@ -340,6 +383,7 @@ elseif($_REQUEST['action'] == 'set_stato_occupato'){
 
 	$id_flat = $_REQUEST['id'];
 	$year = $_REQUEST['year'];
+	$percentuale = $_REQUEST['percentuale'];
 	$id_uploadtype = $_REQUEST['id_uploadtype'];
 	
 	if($_REQUEST['occupato'] == 'false'){
@@ -348,7 +392,7 @@ elseif($_REQUEST['action'] == 'set_stato_occupato'){
 		$is_occupied = 1;
 	}
 
-	$qRep = "REPLACE INTO occupancys (ID_FLAT, IS_OCCUPIED, ID_UPLOADTYPE, ANNO_MS) VALUES ('$id_flat', '$is_occupied', '$id_uploadtype', '$year' )";
+	$qRep = "REPLACE INTO occupancys (ID_FLAT, IS_OCCUPIED, ID_UPLOADTYPE, ANNO_MS, OCCUPANCY) VALUES ('$id_flat', '$is_occupied', '$id_uploadtype', '$year', $percentuale )";
 	$success = mysql_query($qRep);	
 
 	echo json_encode(array('success' => $success));
@@ -374,6 +418,15 @@ elseif($_REQUEST['action']  == 'form_insert_meter'){
 	echo json_encode(array( 'form' => $form ));	
 }
 
+elseif($_REQUEST['action']  == 'get_output'){
+	
+	$dati = misurazioni::get_output($_REQUEST['measure'], $_REQUEST['flat'], $_REQUEST['type']);
+	var_dump($dati);
+	
+}
+
+
+
 elseif($_REQUEST['action']  == 'form_users'){
 	ob_start();
 	include 'users_form.php';
@@ -395,6 +448,10 @@ elseif($_REQUEST['action'] == 'get_real_meters_list_by_id_building'){
 	echo json_encode(array('list' => $ret));
 }
 
+/*
+ * restituisce la lista dei misuratori per la pagina contatori
+ * con la versione 2.0 sarà da eliminare questa procedura
+ * */
 elseif($_REQUEST['action'] == 'get_meters_list_by_id_building'){
 	$idg = $_REQUEST['idg'];
 
@@ -449,11 +506,13 @@ elseif ($_REQUEST['action'] == 'get_days'){
 	$data = $_REQUEST['data'];
 	$id_misuratore = $_REQUEST['id'];
 	
-	$aM = sole::get_last_measures($id_misuratore, 2);
+	$aM = sole::get_last_measures($id_misuratore, 1);
 	
-	if(count($aM)>1){	
+	//var_dump($aM);
+	
+	if(count($aM)==1){	
 		$d1 = dtime::my2db($data);
-		$d2 = $aM[1]['D_MEASURE'];
+		$d2 = $aM[0]['D_MEASURE'];
 		$diff_days = dtime::diffdays($d1, $d2);
 	}
 	echo json_encode(array('days' => $diff_days));
@@ -787,23 +846,44 @@ elseif($_REQUEST['action'] == 'conversion'){ # GESTISCE IL PARAMETRO DI CONVERSI
 		}
 	}
 	
-	echo json_encode(array('success' => $success, 'q' => $q, 'mode' => $mode));
+	echo json_encode(array('success' => $success, 'mode' => $mode));
 }
 
-elseif($_REQUEST['action'] == 'get_riepilogo_contatore'){
-	$idmeter = $_REQUEST['idmeter'];
+/*
+ * get_riepilogo_contatore sole v1.5, da cancellare
+ * */
+// elseif($_REQUEST['action'] == 'get_riepilogo_contatore'){
+// 	$idmeter = $_REQUEST['idmeter'];
+// 	$ret = array('flats' => '', 'meter' => '', 'usages' => '');
+	
+// 	$qM = "SELECT * FROM meters WHERE ID_METER = '$idmeter'";
+// 	$rM = rs::rec2arr($qM);
+
+// 	$ret = sole::get_scheda_meter($idmeter);
+// 	$ret['flats'] = sole::get_multicheck_flats_list_by_id_building($_REQUEST['id_building'], $rM['ID_SUPPLYTYPE'], $idmeter);
+
+// 	//$ret['usages'] = sole::get_multicheck_usages_list_by_id_meter($idmeter);
+	
+// 	$ret['meter'] = '<h2>'.METER.':</h2>'.$ret['main'];
+// 	$ret['valori_iniziali'] = '<h2>'.INIT_VALUES.':</h2>'.$ret['valori_iniziali'];
+	
+// 	echo json_encode($ret);
+// }
+
+
+elseif($_REQUEST['action'] == 'get_meter_data'){
+	
+	include 'scheda_meter.php';
+	
+	$id=prepare4sql($_REQUEST['id']);
+
 	$ret = array('flats' => '', 'meter' => '', 'usages' => '');
 	
-	$qM = "SELECT * FROM meters WHERE ID_METER = '$idmeter'";
-	$rM = rs::rec2arr($qM);
+	$q="SELECT ID_SUPPLYTYPE FROM meters WHERE ID_METER={$id} LIMIT 1";
+	$row = rs::rec2arr($q);
 
-	$ret = sole::get_scheda_meter($idmeter);
-	$ret['flats'] = sole::get_multicheck_flats_list_by_id_building($_REQUEST['id_building'], $rM['ID_SUPPLYTYPE'], $idmeter);
-
-	//$ret['usages'] = sole::get_multicheck_usages_list_by_id_meter($idmeter);
+	$ret = get_scheda_meter($id);
 	
-	$ret['meter'] = '<h2>'.METER.':</h2>'.$ret['main'];
-	$ret['valori_iniziali'] = '<h2>'.INIT_VALUES.':</h2>'.$ret['valori_iniziali'];
 	
 	echo json_encode($ret);
 }
@@ -1021,31 +1101,38 @@ elseif ($_REQUEST['action'] == 'delete_meter'){
 	$ret = $msg -> print_msg(false);
 	echo json_encode(array('success' => $success, 'message' => $ret));
 }
-elseif ($_REQUEST['action'] == 'list_outputs'){
-	$msg = new myerr();
-	list($id, $year, $mode, $id_user) = request::get(array('id' => NULL, 'year' => NULL, 'mode' => NULL, 'id_user' => NULL));
 	
-	if($mode == 'PRODUCTION'){
-		include_once 'output_production.php';
-	} else {
-		$outputs = new outputs($id, $year, $mode, $id_user);
-		//$outputs -> debug(); // = true;
-		$outputs -> print_table();
-	}
-}
-elseif ($_REQUEST['action'] == 'list_outputs12'){
+/*
+ * genera la tabella degli output
+ * */
+elseif ($_REQUEST['action'] == 'table_output'){
+	
 	$msg = new myerr();
-	list($id, $year, $mode, $id_user) = request::get(array('id' => NULL, 'year' => NULL, 'mode' => NULL, 'id_user' => NULL));
+	list($id_building, $year, $freq, $valori, $area, $bilancio, $mode) = request::get(array('b' => NULL, 'year' => NULL, 'freq' => NULL, 'valori' => NULL, 'area'=>NULL,'bilancio'=>NULL,'modalita'=>NULL));
+		
+	require_once LIBRARY.'classes/extra/table_output.php';
 
-	$outputs = new outputs12($id, $year, $mode, $id_user);
+	$conf=array(
+		'year'=>$year,
+		'mode'=>$mode,
+		'values'=>$valori,
+		'freq'=>$freq,
+		'bilancio'=>$bilancio,
+		'area'=>$area,
+	);
+	
+	$outputs = new table_output($id_building, $conf);
 	// $outputs -> debug(); // = true;
 	$outputs -> print_table();
+	exit;
 }
+
 elseif ($_REQUEST['action'] == 'get_sinottica'){
 	$output = array();
-	$id_building = $_REQUEST['id_building'];
+	$id_building = prepare4sql($_REQUEST['id_building']);
+	$mode = prepare4sql($_REQUEST['mode']);
 	
-	$r = sole::get_meters_sinottica_by_idbuilding($id_building);
+	$r = sole::get_meters_sinottica_by_idbuilding($id_building, $mode);
 	
 	$output['total'] = count($r);
 	$output['page'] = 1;
@@ -1124,7 +1211,7 @@ elseif ($_REQUEST['action'] == 'select_energy'){
 	$id_building = $_REQUEST['bld'];
 	$dati = array();
 	if(strlen($id_building))	{
-		$types = sole::get_metertypes_by_idbuilding($id_building, 0);
+		$types = sole::get_metertypes_by_idbuilding($id_building, 0, true);
 	}
 	
 	foreach($types as $k => $v){
@@ -1335,4 +1422,120 @@ elseif($_REQUEST['action'] == 'del_measure2'){ // elimina una misurazione semest
 	}
 	echo json_encode( array( 'success' => $success ) );
 }
+
+/*
+ * ottiene gli utilizzi in base alla modalità richiesta: building, federation
+ * */
+elseif($_REQUEST['action'] == 'get_usages'){
+	
+	$mode=prepare($_REQUEST['mode']);
+	$id=prepare($_REQUEST['id']);
+	
+	$usages=sole::get_usages($mode, $id);
+	
+	echo json_encode( $usages );
+}
+
+/*
+ * ricava i valori per la lingua visualizzata dalla tabella referenziata
+ * */
+elseif($_REQUEST['action'] == 'get_options'){
+	$id_field = $_REQUEST['id_field'];
+	$field = substr($id_field, 3);
+	$table = strtolower($field).'s';
+	
+	/*
+	 * verifica se la tabella utilizza il multilingua
+	 * */
+	$q="SHOW COLUMNS FROM `{$table}`";
+	$rows=rs::inMatrix($q);
+	
+	foreach($rows as $row){
+		if($row['Field']==$field.'_'.LANG_DEF){
+			$field.='_'.LANG_DEF;
+			break;
+		}
+	}
+	
+	$q = "SELECT $id_field as id,
+	$field as value
+	FROM $table
+	ORDER BY $field ASC
+	";
+	
+	$rows=rs::inMatrix($q);
+	echo json_encode( $rows );
+}
+
+/*
+ *  Restituisce l'anno di inizio e di fine del periodo in cui esistono
+ *  misurazioni per un dato edificio
+ */
+elseif($_REQUEST['action'] == 'get_years_range'){
+	$id_building = $_REQUEST['bld'];
+	
+	$r = false;
+	
+	if($id_building>0)	{
+		$q="SELECT MIN(ANNO_MS) AS start, MAX(ANNO_MS) AS end FROM
+		(SELECT DISTINCT ANNO_MS FROM `measures`
+		RIGHT JOIN msoutputs USING(ID_MEASURE)
+		LEFT JOIN meters USING(ID_METER)
+			
+		WHERE ID_BUILDING=$id_building) AS anni";
+		$r=rs::rec2arr($q);
+		
+		$rows=rs::inMatrix($q);
+		
+	}	
+	
+	echo json_encode( $r );
+
+	
+}
+
+/*
+ * ricava tutti i valori di un descrittore
+ * */
+if($_REQUEST['action'] == 'get_dps_options'){ /* ricava le option dalla tabella descrittori */
+	/* indica se trovare i valori figli */
+	$hinner_search = (array_key_exists('self', $_REQUEST) && $_REQUEST['self'] != 'false') ? "descriptors.ID_SELF = '{$_REQUEST['self']}' AND " : '';
+	$field = $_REQUEST['field'];
+	
+	$q="SELECT ID_DESCRIPTOR AS id, DESCRIPTOR_".LANG_DEF." AS value FROM descriptors
+		WHERE {$hinner_search}
+		ID_DESCRIPTORS_TYPE='{$field}'
+		ORDER BY
+		RANK ASC,
+		DESCRIPTOR_".LANG_DEF." ASC";
+
+	$rows=rs::inMatrix($q);
+	echo json_encode($rows);
+}
+
+/*
+ * ricava la lista di appartamenti per edificio
+ * */
+if($_REQUEST['action'] == 'get_flats'){
+	
+	$id_building=prepare($_REQUEST['id']);
+	$flats = sole::get_flats_by_idbuilding($id_building);
+	
+	$rows=array();
+	foreach($flats as $k=>$flat){
+		$rows[$k]['id']=$flat['ID_FLAT'];
+		$rows[$k]['value']=$flat['CODE_FLAT'];
+	}
+		
+	echo json_encode($rows);
+}
+
+/*
+ * scheda edificio
+ * */
+elseif($_REQUEST['action']=='get_buildingchart'){
+	$id_building = prepare4sql($_REQUEST['id']);
+	echo sole::building_chart($id_building);
+}
+
 ?>

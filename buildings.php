@@ -14,25 +14,34 @@ if(array_key_exists('del',$_GET) || array_key_exists('del',$_POST)){
 	}
 	if($cnt>0) $ack[] = "$cnt eliminati";
 }
-//$my_vars->where('');
-$aFromp=array();
-
-$scheda -> query_list();
-$qTotRec = $scheda->query_list;
-
-$sublable = arr::arr2constant($aShowList, false);
 
 
 $extra_where = "";
-if($user -> idg == 2){ # FM
+if($user->idg == 2){ # GM
 	$extra_where = "ID_FEDERATION = ".$user -> aUser['ID_FEDERATION'];
 }
-elseif($user -> idg == 3){ # MHCU
+elseif($user->idg == 3){ # MHMU
 	$extra_where = "hcompanys.ID_USER = '".$user -> aUser['ID_USER']."'";
 }
-elseif($user -> idg == 4){ # HCU
+elseif($user->idg == 4){ # HMU
 	$extra_where = "buildings.ID_HCOMPANY = '".$user -> aUser['ID_HCOMPANY']."'";
 }
+
+if( array_key_exists('federation', $_REQUEST) && ! empty($_REQUEST['federation'])){
+	$scheda->extra_join.= "\n".'Left Join federations ON hcompanys.ID_FEDERATION = federations.ID_FEDERATION';
+	$federation=prepare4sql($_REQUEST['federation']);
+	if( ! empty($extra_where)){
+		$extra_where.=" AND ";
+	}
+	$extra_where .= "federations.FEDERATION LIKE '%{$federation}%' ";
+}
+
+$aFromp=array();
+
+$scheda->query_list();
+$qTotRec = $scheda->query_list;
+
+$sublable = arr::arr2constant($aShowList, false);
 
 $my_vars->where($extra_where);
 
@@ -53,6 +62,11 @@ $rs = rs::inMatrix($qrs=$qTotRec." ".$cursor -> limit);
 //echo $qrs;
 $lista=''; $cnt=0;
 foreach($rs as $rec){
+	
+	//print_r($rec);
+	
+	
+	
 	$backUriIds["id"] = $rec[$scheda->f_id];
 	if(!empty($scheda->files)){ // GESTIONE MULTIPLA FILE
 		$totali = $scheda->cnt_files($rec[$scheda->f_id]);
@@ -74,10 +88,14 @@ foreach($rs as $rec){
 		$href[ADDRESS_BLD] = io::a('buildings_address.php', array_merge($backUriIds, array('crud' => 'upd')), ADDRESS_BLD, array('class' => 'href'));
 		$href[PICTURES] = io::a('buildings_f.php', array_merge($backUriIds, array('crud' => 'upd')), PICTURES, array('class' => 'href'));
 		$href[IS_UPLOADER] = io::a('buildings_users_ext.php', array_merge($backUriIds, array('crud' => 'upd')), IS_UPLOADER, array('class' => 'href'));
+		$href[COEFFICIENTS] = io::a('buildings_conversions.php', array_merge($backUriIds, array('crud' => 'upd')), COEFFICIENTS, array('class' => 'href'));
 	}
-	//print_r($href);
-# FORMATTAZIONE PARTICOLARE DI ALCUNI CAMPI ########################################
-# FINE CONFIGURAZIONE CAMPI LISTA ##################################################
+
+/*
+ * formattazione particolare di alcuni campi
+ * fine configurazione campi lista
+ * */
+	
 	$celle='';
 	foreach($sublable as $k=>$v){
 		if(substr($k,0,2)=='D_') $rec[$k] = dtime::my2iso($rec[$k]); // DATA
@@ -97,8 +115,21 @@ foreach($rs as $rec){
 		else $rec[$k] = strcut(trim(strip_tags($rec[$k])),'...',20);
 		$celle.='<td>'.$rec[$k].'</td>';
 	}
-	# TOOLTIP E CONTROLLI MESSAGGI RELATIVI AI SINGOLI RECORD
 	
+	/*
+	 * celle extra
+	 * */
+	$q="SELECT federations.FEDERATION
+		FROM hcompanys
+		LEFT JOIN federations USING(ID_FEDERATION)
+		WHERE hcompanys.ID_HCOMPANY={$rec['ID_HCOMPANY']}";
+	$row=rs::rec2arr($q);
+	
+	$celle.='<td>'.$row['FEDERATION'].'</td>';
+	
+	/*
+	 * tooltipo e controlli messaggi relativi ai singoli record
+	 * */
 	if(empty($rec['ID_HCOMPANY'])){
 		$href['tooltip'] = io::tooltip(ERROR, ADD_HC, ICO_ALERT);
 	}
@@ -145,16 +176,23 @@ include_once HEAD_AR;
 <?=request::hidden($backUriHidden)?>
 <table class="list">
 <tr class="bg">  
-<th colspan="<?=$my_vars->colonne?>">
+<th colspan="<?=$my_vars->colonne+1?>">
 <?=$href_new?>
 </th>
 <th align="right"><?=$input_delete?></th>
 </tr>
-<tr class="sort"><?=$my_vars->th?><th align="right"><?=$sel_tutti?></th></tr>
-<tr class="search"><?=$my_vars->ricerca?><th align="right"><input id="button" <?=$my_vars->sortbutton;?> class="g-button" type="submit" value="<?=FIND?>" name="button"/></th></tr>
+<tr class="sort">
+	<?=$my_vars->th?>
+	<th><a class="g-button" href="#" style="background-image:none;"><?=__('Gruppo')?></a></th>
+	<th align="right"><?=$sel_tutti?></th></tr>
+<tr class="search">
+	<?=$my_vars->ricerca?>
+	<th><input class="input" type="text" maxlength="18" name="federation" value="<?=array_key_exists('federation', $_REQUEST) ? $_REQUEST['federation'] : '';?>"></th>
+	<th align="right"><input id="button" <?=$my_vars->sortbutton;?> class="g-button" type="submit" value="<?=FIND?>" name="button"/></th>
+</tr>
 <?=$lista?>
-<tr><th colspan="<?=$my_vars->colonne+1?>"><?=$cursor -> player?></th></tr>
-<tr><th colspan="<?=$my_vars->colonne+1?>"><?=$cursor -> t_recs?> record | <?=$cursor -> t_curs?> pagine</th></tr>
+<tr><th colspan="<?=$my_vars->colonne+2?>"><?=$cursor->player?></th></tr>
+<tr><th colspan="<?=$my_vars->colonne+2?>"><?=$cursor->t_recs?> record | <?=$cursor->t_curs?> pagine</th></tr>
 </table>
 </form>
 <?php

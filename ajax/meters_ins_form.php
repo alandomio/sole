@@ -216,9 +216,12 @@ print request::hidden($backUri)
 <div class="lbl"><?=IS_DOUBLE?></div>
 <div id="is_double"><? $db -> IS_DOUBLE -> get(); ?></div>
 </div>
+
 <div id="dim_impianto" class="dn">
 <div class="lbl"><?=TAGLIA_IMPIANTO?></div><input type="text" name="SIZE" value="" /></div>
+
 <div class="hmeter"><div class="lbl"><?=HMETER?></div><? $db -> HMETER -> get(); ?></div>
+
 <div class="shformula"><div class="lbl"><?=D_FIRSTVALUE?></div><? $db -> D_FIRSTVALUE -> get(); ?></div>
 <div class="boxinput shformula"><div class="lbl"><?=START_1?></div><? $db -> START_1 -> get(); ?></div>
 <div class="hourly_m shformula"><div class="lbl"><?=START_2?></div><? $db -> START_2 -> get(); ?></div>

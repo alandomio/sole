@@ -9,8 +9,6 @@ $id_uploadtype
 */
 
 // i mesi da visualizzare per l'anno scelto
-
-
 $d_measure = false;
 if(array_key_exists('d_measure', $_GET)){
 	$d_measure = dtime::my2db( $_GET['d_measure']);
@@ -18,6 +16,12 @@ if(array_key_exists('d_measure', $_GET)){
 
 // METERS LIST
 $rms = sole::get_real_2_by_id_bld( $id_building, 'mostra_prima_i_condivisi', $d_measure );
+
+/*
+ * tipo monitoaggio
+ * */
+$q="SELECT MONITORTYPE as value FROM buildings WHERE ID_BUILDING={$id_building} LIMIT 1";
+$monitortype=rs::rec2arr($q);
 
 $tr = '';
 $TR = '';
@@ -37,11 +41,17 @@ $model_1 = '
 $cnt = 0;
 // riga principale contatore
 foreach($rms as $k => $meter){
+	$dstart='';
+	$dremove='';
+	if( ! empty($meter['D_REMOVE']) && $meter['D_REMOVE']!='0000-00-00'){
+		$dremove=dtime::my2iso($meter['D_REMOVE']);
+		$dremove='<li style="line-height:20px"><img src="images/icon-meter-remove.png" alt="'.__('Misuratore dismesso il').'" title="'.__('Misuratore dismesso il').'" style="vertical-align:middle;"> <span style="vertical-align:middle;">'.$dremove.'</span></li>';
+	}
 	
-	// elimino le righe dei misuratori dismessi
-	//if($meter['D_REMOVE'] != '0000-00-00'){
-	//	continue;
-	//}
+	if( ! empty($meter['D_FIRSTVALUE']) && $meter['D_FIRSTVALUE']!='0000-00-00'){
+		$dstart=dtime::my2iso($meter['D_FIRSTVALUE']);
+		$dstart='<li style="line-height:20px"><img src="images/icon-meter-add.png" alt="'.__('Misuratore aggiunto il').'" title="'.__('Misuratore aggiunto il').'" style="vertical-align:middle;"> <span style="vertical-align:middle;">'.$dstart.'</span></li>';
+	}
 	
 	$model_selected = 'model_'.$cnt % 2;
 	$cnt ++;
@@ -50,17 +60,17 @@ foreach($rms as $k => $meter){
 	<div id="message'.$meter['ID_METER'].'" class="msg_ins_meter"></div>
 	<ul class="simple">
 	<li><strong>'.$meter['CODE_METER'].'</strong></li>
-	<li><strong>'.$meter['MATRICULA_ID'].'</strong></li>
-	<li>'.$meter['METERTYPE_'.LANG_DEF].'</li>
-	<li>'.$meter['UNIT'].'</li>
+		<li>'.$meter['MATRICULA_ID'].'</li>
+		<li>'.$meter['METERTYPE_'.LANG_DEF].' '.$meter['UNIT'].'</li>
+		'.$dstart.'
+		'.$dremove.'
 	</ul>
 	</div>
 	';
 	
-	/////////////////////////////
-	// inizio generazione tabella
-	/////////////////////////////
-	
+	/*
+	 * inizio generazione tabella
+	 * */
 	$nColonne = 7;
 	
 	$aFasce = array('F1'); $aF = array('F1', 'F2', 'F3');
@@ -70,11 +80,9 @@ foreach($rms as $k => $meter){
 	
 	 $td = ''; $tr = '';
 	
-	
-
 	// $measures2 = misurazioni::get_last_measures_by_idmeter($meter['ID_METER']);
+	// fissa il limite minimo dell'anno
 	
-	// fisso il limite minimo dell'anno
 	$YEAR = $year-2;
 	if( $YEAR < SHOW_FROM_YEAR){
 		$YEAR = SHOW_FROM_YEAR;
@@ -82,9 +90,30 @@ foreach($rms as $k => $meter){
 	
 	for( $YEAR; $YEAR<=$year; $YEAR++){
 
+		/*
+		 * in caso di misurazioni fuori dal periodo di validità del contatore,
+		 * non viene visualizzato il controllo
+		 * */
+		if( ! empty($meter['D_REMOVE']) && $meter['D_REMOVE']!='0000-00-00'){
+			$y=substr($meter['D_REMOVE'], 0, 4);
+			if($y<$YEAR){
+				// echo $y.' '.$YEAR.BR.$meter['CODE_METER'].' '.$meter['ID_METER'].BR;
+				continue;
+			}
+			
+		}
+		if( ! empty($meter['D_FIRSTVALUE']) && $meter['D_FIRSTVALUE']!='0000-00-00'){
+			$y=substr($meter['D_FIRSTVALUE'], 0, 4);
+			if($y>$YEAR){
+				// echo $y.' '.$YEAR.BR.$meter['CODE_METER'].' '.$meter['ID_METER'].BR;
+				continue;
+			}
+		}
+		
+
 		$measures2 = misurazioni::get_measures_2_by_idmeter($meter['ID_METER'], $YEAR);
 		
-		// calcolo l'id_uploadtype
+		// calcola l'id_uploadtype
 		$limit_uploadtype = 2;
 		if( $YEAR == date('Y')){
 			// se ho scelto l'anno corrente, verifico se mostrare un solo semestre o entrambi
@@ -95,6 +124,13 @@ foreach($rms as $k => $meter){
 				$limit_uploadtype = 2;
 		}
 		
+		/*
+		 * controlla se l'edificio è configurato per una sola misurazione annuale
+		 * */
+		if($monitortype['value']==12){
+			$limit_uploadtype = 1;
+		}
+		
 		for($id_uploadtype = 1; $id_uploadtype <= $limit_uploadtype; $id_uploadtype++){
 			$key = $YEAR.$id_uploadtype;
 			
@@ -102,9 +138,14 @@ foreach($rms as $k => $meter){
 			$td .= mytag::in($YEAR, 'td', array('width' => '5%'));
 			$td .= mytag::in($id_uploadtype, 'td', array('width' => '5%'));
 			
-			// campo data
-			
-			$write = ( $measures2[$key]['mode'] == 'write' || ! array_key_exists($key, $measures2) ) ? true : false;
+			/*
+			 * campo data
+			 * */
+			if( ! array_key_exists($key, $measures2)){
+				$write = true;
+			} else {
+				$write = ($measures2[$key]['mode'] == 'write') ? true : false;
+			}
 			
 			if( $write ){
 			
@@ -116,7 +157,6 @@ foreach($rms as $k => $meter){
 		
 				$itd = 4; // le colonne già stampate
 				
-				// campi F1, F2, F3
 				foreach($aFasce as $kk => $field){
 					$input = new io();
 					$input -> type = 'text';
@@ -131,7 +171,9 @@ foreach($rms as $k => $meter){
 				$td .= mytag::in($value, 'td', array('width' => '20%'));
 				$itd = 4; // le colonne già stampate
 				
-				// campi F1, F2, F3
+				/*
+				 * campi F1, F2, F3
+				 * */
 				foreach($aFasce as $kk => $field){
 					$value = array_key_exists($key, $measures2) ? $measures2[$key][$field] : '';
 				

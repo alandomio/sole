@@ -3,6 +3,8 @@
 session_start();
 set_time_limit(0);
 include_once '../init.php';
+$user = new autentica($aA5);
+$user->login_no_redirect(false);
 $MYFILE -> catch_buffer();
 
 error_reporting(7);
@@ -22,8 +24,14 @@ $_N_ANNI = 6;
 
 $flats = array();
 
+if($user->idg == 5)	{
+	$_REQUEST['f1'] = sole::get_flat_by_userid($user->aUser['ID_USER']);
+	$_REQUEST['tipo'] = '';
+}
+	
+
 if($_REQUEST['tipo'] == 'multiplo')	{
-	// è stato scelto un edificio
+	// ï¿½ stato scelto un edificio
 	$flats = sole::get_flats_by_idbuilding( $_REQUEST['bld'] );
 	
 	// setto un qualsiasi valore ID_FLAT per l'edificio
@@ -47,6 +55,8 @@ $pdf->SetMargins(15,25,15);
 $_SESSION['stato_report'] = 0;
 
 $start = microtime(true);
+
+
 
 
 foreach($flats as $f)	{
@@ -212,29 +222,34 @@ function stampa_tabella($x, $y)	{
 				for($year=$y1;$year<=$y1 + 6;$year++)	{
 					
 
-					$dati = $flat1->get_npvm2($usage['ID_USAGE'], $year, 1);
-
+					//$dati = $flat1->get_npvm2($usage['ID_USAGE'], $year, 1);
+					$dati = $flat1->get_value('m', 'f', $usage['ID_USAGE'], $year, 1);
+					//$value = $dati['value'];
+ 					//echo $usage['description'] . '<br>';
+ 					//var_dump($dati);
 
 					if(!isset($avg[$usage['ID_USAGE']][$year][1]))
 						$avg[$usage['ID_USAGE']][$year][1] = sole::get_avg_npvm2($b1, $usage['ID_USAGE'], $year, 1);
-
+					//echo $avg[$usage['ID_USAGE']][$year][1];
 					
 					$value1[$usage['ID_USAGE']][$year] = $dati;
 					
-					//echo $year.'1' . ' ' . $value . ' - '. $avg . '<br>';
+					//echo $year.' 1' . ' ' . $value . ' - '. $avg[$usage['ID_USAGE']][$year][1] . '<br>';
 					$pdf->Cell(8,8,'', 'LR');
 					$pdf->Image('../images/report/' 	. iconadelta($dati, $value1[$usage['ID_USAGE']][$year-1]) 
 														. iconamedia ($dati, $avg[$usage['ID_USAGE']][$year][1]) 
 														. '.png', $pdf->GetX() - 6.5, $pdf->GetY() + 0.5, 5, 5);
 					
-					$dati = $flat1->get_npvm2($usage['ID_USAGE'], $year, 2);
+					//$dati = $flat1->get_npvm2($usage['ID_USAGE'], $year, 2);
+					$dati = $flat1->get_value('m', 'f', $usage['ID_USAGE'], $year, 2);
 					$value = $dati['value'];
+					//var_dump($dati);
 					if(!isset($avg[$usage['ID_USAGE']][$year][2]))
 						$avg[$usage['ID_USAGE']][$year][2] = sole::get_avg_npvm2($b1, $usage['ID_USAGE'], $year, 2);
 					
 					$value2[$usage['ID_USAGE']][$year] = $dati;
 					
-					//echo $year.'2' . ' ' . $value . ' - '. $avg . '<br>';
+					//echo $year.'2' . ' ' . $value . ' - '. $avg[$usage['ID_USAGE']][$year][2] . '<br>';
 					$pdf->Cell(8,8,'', 'LR');
 					$pdf->Image('../images/report/' 	. iconadelta($dati, $value2[$usage['ID_USAGE']][$year-1]) 
 														. iconamedia ($dati, $avg[$usage['ID_USAGE']][$year][2]) 
