@@ -6,7 +6,7 @@ $MYFILE -> catch_buffer();
 <head>
 <link rel="shortcut icon" href="favicon.ico" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<?=$MYFILE -> css?>
+<link href="css/style.css" rel="stylesheet" type="text/css" />
 <title><?=$title_page?></title>
 </head>
 <body>

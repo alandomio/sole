@@ -1,8 +1,6 @@
 <?php
 require_once LIBRARY . 'phpexcel/Classes/PHPExcel.php';
 
-
-
 class excel extends PHPExcel	{
 	public $mappatura = array(	array('etichetta'=>'ID MISURAZIONE', 'campo'=>'ID_MEASURE', 'larghezza'=>0, 'indice'=>0),
 										array('etichetta'=>'ID_EDIFICIO', 'campo'=>'ID_BUILDING', 'larghezza'=>0, 'indice'=>1),
@@ -188,7 +186,4 @@ class excel extends PHPExcel	{
 	}
 	
 } 
-
-
 ?>
-

@@ -18,7 +18,7 @@ foreach($scheda -> ext_table as $k => $v){
 $aStripC = array(stringa::tbl2id($scheda -> table));
 
 # LISTA CAMPI DI RICERCA / ORDINAMENTO
-$aShowList = array('CODE_FLAT', 'ACTIVATION_CODE', 'NETAREA', 'USER');
+$aShowList = array('CODE_FLAT', 'ACTIVATION_CODE', 'NETAREA', 'GROSSAREA', 'USER');
 $aShowCrud = array_diff($scheda -> aFields, $aStripC, $aStripExt);
 //print_r($aShowCrud);
 
@@ -32,7 +32,7 @@ $imgs = 576;
 $sqrs = 80;
 
 # CONFIGURAZIONE FILTRI
-$my_vars = new ordinamento(array('ft' => 'CODE_FLAT', 'ac' => 'ACTIVATION_CODE', 'na' => 'NETAREA', 'iu' => 'USER', 'bld' => 'ID_BUILDING'));
+$my_vars = new ordinamento(array('ft' => 'CODE_FLAT', 'ac' => 'ACTIVATION_CODE', 'na' => 'NETAREA', 'aa' => 'GROSSAREA', 'iu' => 'USER', 'bld' => 'ID_BUILDING'));
 //$my_vars -> campi_force['text']['HCOMPANY'] = 'flats';
 $my_vars -> campi_force['text']['USER'] = 'flats';
 
@@ -43,8 +43,6 @@ $my_vars->tabella = $scheda->table;
 $rec_scheda = rs::rec2arr("SELECT * FROM ".$scheda->table." WHERE ".$scheda->f_id."='$id' LIMIT 0,1");
 
 $aOrd = array();
-# ETICHETTA DA MOSTRARE COME EVIDENZA DEL RECORD
-$etichetta = $rec_scheda[$aShowList[0]].' - '.ACTIVATION_CODE.': '.$rec_scheda['ACTIVATION_CODE'];
 
 # LIMITE FOTO PER UPLOAD
 if(!empty($scheda -> files)){

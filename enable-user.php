@@ -1,5 +1,4 @@
 <?php
-# V.0.1.8
 include_once 'init.php';
 $user = new autentica($aA5);
 $user -> login_no_redirect(false);
@@ -26,7 +25,7 @@ include_once HEAD_AR;
 <form id="form_users" method="post" action="ajax/json.php?action=crud_activation_users">
 </form>
 </div>
-<script type="text/javascript" src="<?=JS_MAIN.'enable-user.js'?>" />
+<script type="text/javascript" src="<?=JS_MAIN.'enable-user.js'?>"></script>
 <?php
 include_once FOOTER_AR;
 ?>

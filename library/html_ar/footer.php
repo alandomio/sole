@@ -1,8 +1,11 @@
 </div>
 <div id="footer">
 <div id="info">
-<span>Copyright &copy; <?=date('Y')?> Legacoop abitanti - website: <a href="http://www.rossobludesign.com" target="_blank" title="ROSSOBLU communication design">Rossobludesign</a></span></div>
+<span>Copyright &copy; <?=date('Y')?> <a href="http://panel.hiveproject.eu" title="http://panel.hiveproject.eu">Hive</a></span></div>
 </div>
-<?=$MYFILE -> js_footer?>
+<?php
+$MYFILE->print_js($position='footer', $type='file');
+$MYFILE->print_js($position='footer', $type='code');
+?>
 </body>
 </html>

@@ -1,5 +1,4 @@
 <?php
-# V.0.1.8
 include_once 'init.php';
 $user = new autentica($aA2);
 $user -> login_standard();
@@ -41,7 +40,7 @@ $aRet = rs::showfull($atabelle, $rec,$lable,$add=array(),$self_join=array(), $my
 list($db->a_name, $db->a_val,$db->a_type,$db->a_maxl,$db->a_default,$db->a_not_null,$db->a_lable,$db->a_dec,$db->a_fkey,$db->a_aval,$db->a_addblank,$db->a_comment,$db->a_sql_type, $db->a_js, $db->a_disabled, $aFval) = $aRet;
 $db -> RAGIONESOCIALE_USR -> not_null = 0;
 
-$db -> a_aval['ID_USER'] = rs::id2arr("SELECT ID_USER, USER FROM users WHERE ID_GRUPPI = '2'"); # SOLO FM
+$db->a_aval['ID_USER'] = rs::id2arr("SELECT ID_USER, USER FROM users WHERE ID_GRUPPI = '2'"); # SOLO GM
 
 $db->dbset();
 
@@ -95,16 +94,32 @@ if(array_key_exists("subDo",$_POST) || array_key_exists("subBack",$_POST)){
 			}
 			
 			if($crud=='ins'){
-				# INSERIMENTO VALORI DI DEFAULT PER LA TABELLA DI CONVERSIONE
-				$qDefaultUsages = "INSERT INTO federations_conversions (ID_FEDERATION, ID_METERTYPE, CONVERSION) 
+				/*
+				 * inserimento valori di default per la tabella di conversione
+				 * */
+				$q = "INSERT INTO federations_conversions (ID_FEDERATION, ID_METERTYPE, CONVERSION) 
 				VALUES 
 				('$id', '1', '2.5'),
 				('$id', '2', '1'),
 				('$id', '3', '10'),
 				('$id', '4', '1')
 				";
-				mysql_query($qDefaultUsages);
+				mysql_query($q);
 				
+				/*
+				 * inserimento utilizzi di default
+				 * */
+				$q="INSERT INTO usages (ID_FEDERATION, USAGE_IT, USAGE_EN)
+					VALUES
+					({$id}, 'Riscaldamento ambienti', 'Space heating'),
+					({$id}, 'Riscaldamento acqua', 'Water heating'),
+					({$id}, 'Raffrescamento ambienti', 'Space cooling'),
+					({$id}, 'Parti comuni', 'Technical services'),
+					({$id}, 'Ventilazione meccanica', 'Mechanical ventilation'),
+					({$id}, 'Cucina', 'Kitchen stove'),
+					({$id}, 'Elettrodomestici nell\'alloggio', 'Electrical appliances in the dwelling')
+					";
+				mysql_query($q);
 			}
 			$scheda->main_img($id);
 			if(array_key_exists("subDo",$_POST)){
@@ -129,7 +144,7 @@ if($user -> idg == 1){
 }
 
 $db -> ID_USER -> addblank = true;
-$db -> ID_USER -> txtblank = S_CHOOSE.' FM';
+$db->ID_USER->txtblank = S_CHOOSE.' GM';
 
 $sub_menu = '';
 foreach($sub_nav as $k => $arr){
@@ -173,7 +188,7 @@ if($crud == 'upd'){
 		print'<tr class="yellow"><td colspan="6"><div class="table_cell"><strong>'.$etichetta.'</strong></div></td></tr>';
 	  }
 
-foreach($sublable as $k=>$v){ # SE UTENTE FM aStripC contiene anche ID_USER
+foreach($sublable as $k=>$v){ # SE UTENTE GM aStripC contiene anche ID_USER
 	if(!in_array($k,$aStripC) && ($k != $scheda->f_path)){
 	?>
 <tr>

@@ -33,10 +33,10 @@ $rec=rs::rec2arr($qrs=$qTotRec." ".$fil);
 if($user -> idg == 1){ # ADMIN
 	$qIDG = "SELECT ID_GRUPPI, TITLE FROM gruppis WHERE ID_GRUPPI <= 2 AND ID_GRUPPI <> 4";
 }
-elseif($user -> idg == 2){ # FM
+elseif($user->idg == 2){ # GM
 	$qIDG = "SELECT ID_GRUPPI, TITLE FROM gruppis WHERE ID_GRUPPI = 3 OR ID_GRUPPI = 4";
 }
-elseif($user -> idg == 3){ # MHCU
+elseif($user->idg == 3){ # MHMU
 	$qIDG = "SELECT ID_GRUPPI, TITLE FROM gruppis WHERE ID_GRUPPI = 4";
 }
 else{ # TUTTI GLI ALTRI
@@ -47,13 +47,13 @@ else{ # TUTTI GLI ALTRI
 if($user -> idg == 1){ # ADMIN
 	$qHC = "SELECT ID_HCOMPANY, CODE_HC FROM hcompanys ORDER BY CODE_HC";
 }
-elseif($user -> idg == 2){ # FM
+elseif($user->idg == 2){ # GM
 	$qHC = "SELECT ID_HCOMPANY, CODE_HC FROM hcompanys
 	RIGHT JOIN federations USING(ID_FEDERATION)
 	WHERE federations.ID_USER = '".$user -> aUser['ID_USER']."'
 	ORDER BY CODE_HC";
 }
-elseif($user -> idg == 3){ # MHCU
+elseif($user->idg == 3){ # MHMU
 	$qHC = "SELECT ID_HCOMPANY, CODE_HC FROM hcompanys WHERE ID_USER = '".$user -> aUser['ID_USER']."'";
 }
 
@@ -167,7 +167,7 @@ if(array_key_exists("subDo",$_POST) || array_key_exists("subBack",$_POST)){
 				mysql_query($qUpl);
 			}				
 			
-/* 			if($rec['ID_GRUPPI'] == 4){ # HCU
+/* 			if($rec['ID_GRUPPI'] == 4){ # HMU
 				
 			
 				$qUpl = "UPDATE users SET ID_HCOMPANY = '' WHERE ID_USER = '$id_rec'";
@@ -216,10 +216,19 @@ foreach($sub_nav as $k => $arr){
 		$sub_menu.='<div class="menu_att"><span>'.$href_to.'</span></div>';
 	}
 }
-$sub_menu = '<div id="menu_bar">'.$sub_menu.'</div>';
 
+$sub_menu = '<div id="menu_bar">'.$sub_menu.'</div>';
 $send_nuovo = arr::_unset($backUri, array('id_rec', 'jsstatis'));
-$href_new = io::a($scheda->file_c, array_merge($send_nuovo, array('crud' => 'ins')), L_NUOVO , array('title' => 'Aggiungi nuovo record', 'class' => 'g-button'));
+
+/*
+ * pulsante nuovo utente solo per HMU
+ * */
+if($user->idg != 4){
+	$href_new = '';
+} else {
+	$href_new = io::a($scheda->file_c, array_merge($backUri,array('crud' => 'ins')), L_NUOVO, array('class' => 'g-button'));
+}
+
 
 include_once HEAD_AR;
 print $sub_menu;
@@ -285,7 +294,7 @@ if($db -> ID_GRUPPI -> val == '5' && $crud == 'upd'){ # CHECKBOX IS_UPLOADER SE 
 <?=$tr_gruppi?>
 <tr><td><div class="table_cell"><strong><?=USER?>*:</strong></div></td><td colspan="5"><div class="table_cell"><? $db -> USER -> get(); ?></div></td></tr>
 
-<tr><td><div class="table_cell"><?=ID_HCOMPANY?> (HCU user):</div></td><td colspan="5"><div class="table_cell"><? $db -> ID_HCOMPANY -> get(); ?></div></td></tr>
+<tr><td><div class="table_cell"><?=ID_HCOMPANY?> (HMU user):</div></td><td colspan="5"><div class="table_cell"><? $db->ID_HCOMPANY->get(); ?></div></td></tr>
 
 <tr>
 <td><div class="table_cell"><strong>Password*:</strong></div></td>

@@ -1,7 +1,7 @@
 <?php
 class misurazioni{
 
-function get_last_measures_by_idmeter($aM){
+static function get_last_measures_by_idmeter($aM){
 	$aMis = array('F1');
 	if($aM['ID_METERTYPE'] == 1 && $aM['HMETER'] > 1){ # CONTATORE ELETTRICO MULTIORARIO
 		$aMis = array('F1', 'F2', 'F3');
@@ -46,7 +46,7 @@ function get_last_measures_by_idmeter($aM){
 	return $r;
 }
 
-function get_last_measures_by_idmeter_for_print($aM){
+static function get_last_measures_by_idmeter_for_print($aM){
 	$aMis = array('F1');
 	if($aM['ID_METERTYPE'] == 1 && $aM['HMETER'] > 1){ # CONTATORE ELETTRICO MULTIORARIO
 		$aMis = array('F1', 'F2', 'F3');
@@ -95,7 +95,7 @@ function get_last_measures_by_idmeter_for_print($aM){
 	return $r;
 }
 
-function get_measures_12_by_idmeter($id_meter, $year){
+static function get_measures_12_by_idmeter($id_meter, $year){
 /*
 	$q = "SELECT
 	measures12.*,
@@ -156,7 +156,7 @@ function get_measures_12_by_idmeter($id_meter, $year){
 }
 
 
-function get_measures_2_by_idmeter($id_meter, $year){
+static function get_measures_2_by_idmeter($id_meter, $year){
 
 	$q = "SELECT * FROM measures
 	WHERE
@@ -209,7 +209,7 @@ function get_measures_2_by_idmeter($id_meter, $year){
 	return $aRet;
 }
 
-function html_tabella_interna($meter, $upload_type, $year){ # $meter � un array di record riguardanti uno o pi� misuratori
+static function html_tabella_interna($meter, $upload_type, $year){ # $meter � un array di record riguardanti uno o pi� misuratori
 	# MEASURES LIST
 	$ams = misurazioni::get_last_measures_by_idmeter($meter);
 	//var_dump($ams);
@@ -316,7 +316,7 @@ function html_tabella_interna($meter, $upload_type, $year){ # $meter � un arra
 	return $table;
 }
 
-function print_measures_table($meter, $upload_type, $year){ # $meter � un array di record riguardanti uno o pi� misuratori
+static function print_measures_table($meter, $upload_type, $year){ # $meter � un array di record riguardanti uno o pi� misuratori
 	# MEASURES LIST
 	$ams = misurazioni::get_last_measures_by_idmeter_for_print($meter);
 	$nColonne = 7;
@@ -435,11 +435,11 @@ function print_measures_table($meter, $upload_type, $year){ # $meter � un arra
 	return $table;
 }
 
-	function get_primary_energy_value($id_measure, $value){
+	static function get_primary_energy_value($id_measure, $value){
 		
 		$q_conversion = "
 			SELECT 
-			federations_conversions.CONVERSION
+			federations_conversions.EP AS CONVERSION
 			FROM measures
 			LEFT JOIN meters ON measures.ID_METER = meters.ID_METER
 			LEFT JOIN flats_meters ON meters.ID_METER = flats_meters.ID_METER
@@ -464,11 +464,11 @@ function print_measures_table($meter, $upload_type, $year){ # $meter � un arra
 		return $primary_energy;
 	}
 	
-	function get_primary_energy_value_by_codename($codename, $id_building, $value){
+	static function get_primary_energy_value_by_codename($codename, $id_building, $value){
 		
 		$q_conversion = "
 			SELECT 
-			federations_conversions.CONVERSION
+			federations_conversions.EP AS CONVERSION
 			FROM measures
 			LEFT JOIN meters ON measures.ID_METER = meters.ID_METER
 			LEFT JOIN flats_meters ON meters.ID_METER = flats_meters.ID_METER
@@ -496,7 +496,7 @@ function print_measures_table($meter, $upload_type, $year){ # $meter � un arra
 	}
 	
 
-	function get_primary_energy_by_metertype($id_flat, $id_metertype, $value){
+	static function get_primary_energy_by_metertype($id_flat, $id_metertype, $value){
 		# DATO L'ID_FLAT E IL TIPO DI MISURATORE, OTTENGO IL VALORE DI TRASFORAMAZIONE, CHE DOVREI AVERE SEMPRE
 		$r_conversion = sole::get_conversions_from_id_flat($id_flat);
 		$primary_ec = $r_conversion[$id_metertype];
@@ -511,18 +511,53 @@ function print_measures_table($meter, $upload_type, $year){ # $meter � un arra
 		return $primary_energy;
 	}
 	
-	function get_output ($id_measure, $flat, $type)	{
-		$id_flat = $flat;
+	static function get_output ($id_measure, $flat, $type, $source='f', $nze=false, $tipoarea='n')	{
+		$id_flat = $flat?$flat:0;
 		$status = 'valid';
-		$q = "SELECT *, msoutputs.STATUS AS status FROM msoutputs
+		
+		//echo $tipoarea;
+
+		if($nze)	{
+			$nze_fields = 'nzes.ID_OUTPUT, nzes.A_NZE AS A, nzes.B_NZE AS B, ';
+			$nze_join = 'LEFT JOIN nzes USING (ID_METER)
+						LEFT JOIN meters AS ameter ON ameter.CODE_METER=nzes.A_NZE AND ameter.ID_BUILDING=meters.ID_BUILDING';
+			
+		} else 
+			$nze_join = 'LEFT JOIN meters AS ameter ON ameter.CODE_METER=meters.A AND ameter.ID_BUILDING=meters.ID_BUILDING';
+		
+		
+		
+		$q = "SELECT meters.*, measures.*, msoutputs.*, flats.*, flats_meters.*, buildings.*, occupancys.*   ,$nze_fields buildings.ID_BUILDING, msoutputs.STATUS AS status,
+					COALESCE(buildings_conversions.EP, afederations_conversions.EP, federations_conversions.EP) AS p,
+					COALESCE(buildings_conversions.CO2, afederations_conversions.CO2, federations_conversions.CO2) AS c,
+					COALESCE(buildings_conversions.EURO, afederations_conversions.EURO,  federations_conversions.EURO) AS e,
+					1 AS f,
+					COALESCE(flatsdiv.GROSSAREA, flats.GROSSAREA) AS GROSSAREA,
+					COALESCE(flatsdiv.NETAREA, flats.NETAREA) AS NETAREA,
+					meters.ID_METERTYPE
+				FROM msoutputs 
 				LEFT JOIN measures USING ( ID_MEASURE ) 
 				LEFT JOIN meters USING ( ID_METER ) 
 				LEFT JOIN flats_meters USING ( ID_METER ) 
+					$nze_join
 				LEFT JOIN flats ON flats.ID_FLAT = flats_meters.ID_FLAT
+					LEFT JOIN flats AS flatsdiv ON flatsdiv.ID_FLAT = $id_flat
+					LEFT JOIN buildings ON flats.ID_BUILDING=buildings.ID_BUILDING
+					LEFT JOIN buildings_conversions ON buildings_conversions.ID_BUILDING=buildings.ID_BUILDING AND buildings_conversions.ID_METERTYPE=meters.ID_METERTYPE
+					LEFT JOIN hcompanys USING(ID_HCOMPANY)
+					
+					LEFT JOIN federations_conversions AS afederations_conversions ON afederations_conversions.ID_FEDERATION=hcompanys.ID_FEDERATION AND afederations_conversions.ID_METERTYPE=ameter.ID_METERTYPE
+					LEFT JOIN federations_conversions ON federations_conversions.ID_FEDERATION=hcompanys.ID_FEDERATION AND federations_conversions.ID_METERTYPE=meters.ID_METERTYPE
+					LEFT JOIN occupancys ON occupancys.ID_FLAT=$id_flat AND occupancys.ID_UPLOADTYPE=measures.ID_UPLOADTYPE AND occupancys.ANNO_MS=measures.ANNO_MS
+					
 				WHERE ID_MEASURE = $id_measure
 				LIMIT 1";
 		//echo $q;
+		//die();
 		$r = rs::rec2arr($q);
+		//echo "<br>\n contatore: " . $r['CODE_METER'] . ' ' . $flat . ' ' . $r['CNPVM2'];
+		//echo '<pre>'; var_dump($r); echo '</pre>';
+		
 		
 		
 		if(empty($r['ID_MEASURE'])){
@@ -530,15 +565,23 @@ function print_measures_table($meter, $upload_type, $year){ # $meter � un arra
 		}
 		
 		//if($id_measure
-		$flat = rs::rec2arr("SELECT NETAREA FROM flats WHERE ID_FLAT=$flat LIMIT 1");
-		$area = $flat['NETAREA'];
+		//$flat = rs::rec2arr("SELECT NETAREA FROM flats WHERE ID_FLAT=$flat LIMIT 1");
 		
-		$metertype = sole::get_metertype_by_idmeter($r['ID_METER']);
+			$area = $r['NETAREA'];
 		
 		
+		if($tipoarea=='n')
+			$areacorr = 1;
+		else
+			$areacorr =  $r['NETAREA'] / $r['GROSSAREA'];
+		
+		//$metertype = sole::get_metertype_by_idmeter($r['ID_METER']);
+		$metertype = $r['ID_METERTYPE'];
+		
+		//echo "\n$areacorr =  {$r['NETAREA']} / {$r['GROSSAREA']}\n";
 		
 		// Codice di validazione dei dati 
-		// Se il contatore è condiviso e non � formula, allora � sempre 'nd'
+		// Se il contatore è condiviso e non è formula, allora è sempre 'nd'
 		if($r['ID_SUPPLYTYPE']==2)  { //contatore condiviso
 			//var_dump($r['ID_METER']);
 			if($r['ID_RF'] == 1){ // real
@@ -548,10 +591,15 @@ function print_measures_table($meter, $upload_type, $year){ # $meter � un arra
 			}
 			
 			// i consumi condivisi devono essere 0 per gli alloggi non occupati
-			if(!sole::is_occupied($id_flat, $r['ID_UPLOADTYPE'], $r['ANNO_MS'])){
-				return array('value' => 0, 'status' => $status);
-			}
+// 			if(!sole::is_occupied($id_flat, $r['ID_UPLOADTYPE'], $r['ANNO_MS'])){
+// 				return array('value' => 0, 'status' => $status);
+// 			}
+			
+			
 		}
+					
+		if($r['IS_OCCUPIED'] == 0 || $r['OCCUPANCY'] == 0 )
+			return array('value' => 0, 'status' => $status, 'area'=>0);
 					
 		// Se il contatore è condiviso e formula, allora è sempre corretto
 		
@@ -612,10 +660,12 @@ function print_measures_table($meter, $upload_type, $year){ # $meter � un arra
 			if (isset($r['CNPVM2'])){
 				# CONTROLLO SE OCCUPATO
 				if(!sole::is_occupied($id_flat, $r['ID_UPLOADTYPE'], $r['ANNO_MS'])){
-					$value = 0;
+					$output = 0;
+				} else {
+					$output = $r['CNPVM2'] * $area;
 				}
 				
-				$output = $r['CNPVM2'] * $area;
+				
 				
 			}
 			else 
@@ -629,11 +679,13 @@ function print_measures_table($meter, $upload_type, $year){ # $meter � un arra
 		if($type=='NPVFULL')	
 			$value =  $output;
 		elseif($type=='NPVM2')	
-			$value = $output / $area;
+			$value = $output / $area  * $areacorr;
 		elseif($type=='NPVFULLEP')	
-			$value = self::get_primary_energy_by_metertype($id_flat, $metertype, $output);
+			//$value = self::get_primary_energy_by_metertype($id_flat, $metertype, $output);
+			$value =  $output;
 		elseif($type=='NPVM2EP')	
-			$value = self::get_primary_energy_by_metertype($id_flat, $metertype, $output / $area);
+			//$value = self::get_primary_energy_by_metertype($id_flat, $metertype, $output / $area);
+			$value = $output / $area  * $areacorr;
 		elseif($type=='F1'){
 			if((!empty($r['NPVM2F1']) && !empty($r['NPVM2'])) && $r['NPVM2'] > 0 ){
 				$value = ($r['NPVM2F1'] / $r['NPVM2']) * 100;
@@ -641,7 +693,23 @@ function print_measures_table($meter, $upload_type, $year){ # $meter � un arra
 				$value = 0;
 			}
 		}
-		return array('value' => $value, 'status' => $status);
+		
+		//var_dump($r['ID_OUTPUT']);
+		
+		if($type!='F1'){
+			$value = $value * $r[$source];
+		}
+		//var_dump($r[$source]);
+		
+		//echo $areacorr;
+		//echo $output.BR;
+		//echo $area.BR;
+		
+		$dati_out = array('value' => $value, 'status' => $status, 'area'=>($area / $areacorr), 'measure'=>$id_measure);
+		//echo $value . ' ' . $r['CNPVM2'] . ' ' . $tipoarea . ' ' .  $status . BR;
+		//var_dump($dati_out);
+		
+		return $dati_out;
 	}
 	
 	
@@ -655,7 +723,7 @@ function print_measures_table($meter, $upload_type, $year){ # $meter � un arra
 	 * @param int $type  (NPVFULL|NPVM2|NPVFULLEP|NPVM2EP)
 	 * @return array <float $value, string $status> 
 	 */
-	function get_output12 ($id_measure, $flat, $type)	{
+	static function get_output12 ($id_measure, $flat, $type)	{
 		$id_flat = $flat;
 		//echo $type;
 		$status = 'valid';
@@ -690,11 +758,11 @@ function print_measures_table($meter, $upload_type, $year){ # $meter � un arra
 		if($type=='NPVFULL')
 			$value =  $output;
 		elseif($type=='NPVM2')
-			$value = $output / $area;
+			$value = $output / $area * $areacorr;
 		elseif($type=='NPVFULLEP')
 			$value = self::get_primary_energy_by_metertype($id_flat, $metertype, $output);
 		elseif($type=='NPVM2EP')
-			$value = self::get_primary_energy_by_metertype($id_flat, $metertype, $output / $area);
+			$value = self::get_primary_energy_by_metertype($id_flat, $metertype, $output / $area * $areacorr);
 		elseif($type=='F1'){
 			if((!empty($r['NPVM2F1']) && !empty($r['NPVM2'])) && $r['NPVM2'] > 0 ){
 				$value = ($r['NPVM2F1'] / $r['NPVM2']) * 100;
@@ -709,7 +777,7 @@ function print_measures_table($meter, $upload_type, $year){ # $meter � un arra
 	
 	
 	
-	function del_measure12($id_meter, $id_uploadtype, $year){
+	static function del_measure12($id_meter, $id_uploadtype, $year){
 		$return=false;
 		if( $id_meter && $id_uploadtype && $year ){
 			$q = "DELETE FROM measures12 WHERE ID_METER='".prepare($id_meter)."' AND ID_UPLOADTYPE='".prepare($id_uploadtype)."' AND ANNO_MS='".prepare($year)."'";
@@ -734,7 +802,7 @@ function print_measures_table($meter, $upload_type, $year){ # $meter � un arra
 		return $return;
 	}
 	
-	function del_measure2($id_meter, $id_uploadtype, $year){
+	static function del_measure2($id_meter, $id_uploadtype, $year){
 	
 		if( $id_meter && $id_uploadtype && $year ){
 			$q = "DELETE FROM measures WHERE ID_METER='".prepare($id_meter)."' AND ID_UPLOADTYPE='".prepare($id_uploadtype)."' AND ANNO_MS='".prepare($year)."'";
@@ -757,7 +825,7 @@ function print_measures_table($meter, $upload_type, $year){ # $meter � un arra
 	 * @param  $overwrite
 	 * @return id_measure
 	 */
-	function save_measure12($year, $id_uploadtype, $id_meter, $date, $F1, $F2, $F3, $overwrite=false){
+	static function save_measure12($year, $id_uploadtype, $id_meter, $date, $F1, $F2, $F3, $overwrite=false){
 		
 		$id = false;
 			$rqst = array('year', 'id_uploadtype', 'id_meter', 'date', 'F1', 'F2', 'F3' );
@@ -783,7 +851,7 @@ function print_measures_table($meter, $upload_type, $year){ # $meter � un arra
 			
 					
 			}
-			echo $q;
+			//echo $q;
 			if(strlen($q))	{
 			$id = mysql_insert_id();
 					
@@ -813,7 +881,7 @@ function print_measures_table($meter, $upload_type, $year){ # $meter � un arra
 	 * @param  $overwrite
 	 * @return id_measure
 	 */
-	function save_measure($year, $id_uploadtype, $id_meter, $date, $F1, $F2, $F3, $overwrite=false){
+	static function save_measure($year, $id_uploadtype, $id_meter, $date, $F1, $F2, $F3, $overwrite=false){
 	
 		$rqst = array('year', 'id_uploadtype', 'id_meter', 'date', 'F1', 'F2', 'F3' );
 		foreach($rqst as $k => $v){
@@ -850,7 +918,7 @@ function print_measures_table($meter, $upload_type, $year){ # $meter � un arra
 	 * 
 	 * @param int $id_measure
 	 */
-	function calc_consumi12($id_measure, $overwrite=false)	{
+	static function calc_consumi12($id_measure, $overwrite=false)	{
 		static $mesi = array(0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);
 		
 		

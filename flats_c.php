@@ -2,6 +2,30 @@
 include_once 'init.php';
 $user = new autentica($aA3);
 $user -> login_standard();
+
+
+$MYFILE->add_js_group('flats-users', array(
+		JS_MAIN.'flats-users.js',
+),
+		100, 'head', 'file');
+
+if(array_key_exists('action', $_REQUEST)){
+	
+	if($_REQUEST['action'] == 'preview_flatcode'){ /* previsione del nome che verrà assegnato all'appartamento */
+		$id_building = prepare( $_REQUEST['id'] );
+		
+		$q = "SELECT COUNT(*) AS N_FLATS FROM flats WHERE ID_BUILDING={$id_building}";
+		$row = rs::rec2arr($q);
+		
+		$n = $row['N_FLATS']+1;
+		$flatcode = stringa::zero_fill($n, 3);
+
+		exit( json_encode( array( 'flatcode' => $flatcode )) );
+	}
+	
+	exit;
+}
+
 include_once stringa::get_conffile($MYFILE -> filename);
 
 $fil = "";
@@ -33,8 +57,6 @@ if($user -> idg != 1){
 	ORDER BY CODE_BLD ASC";
 }
 
-
-
 $aRet = rs::showfullpersonal($atabelle, $rec, $lable, array(), array(), array(
 	'ID_BUILDING' => $q_building
 ), $my_vars);
@@ -62,10 +84,16 @@ if(array_key_exists("subDo",$_POST) || array_key_exists("subBack",$_POST)){
 	$ctrl=array("null_ctrl","syntax_ctrl","max_ctrl","min_ctrl","uni_ctrl");
 		
 	foreach ($rec as $fld=>$val){
+		
+		if($fld=='NETAREA' || $fld=='GROSSAREA'){
+			continue;
+		}
+		
 		$db->$fld->dbtable=$tabella;
 		$db->$fld->dbkeyfld=$db->primkey->name;
 		$db->$fld->dbkeyval=$db->primkey->val;
 		foreach($ctrl as $func){
+			
 			$ERR_CRUD[$fld] = empty($ERR_CRUD[$fld]) ? rs::$func($db->$fld) : $ERR_CRUD[$fld];
 			if(!empty($ERR_CRUD[$fld])){
 				$db -> $fld -> css = 'alert_red';
@@ -74,6 +102,9 @@ if(array_key_exists("subDo",$_POST) || array_key_exists("subBack",$_POST)){
 	}
 	$MYFILE -> add_msg($ERR_CRUD, 'err');
 
+	/*
+	 * before save privacy
+	 * */
 	if(array_key_exists('IS_PRIVACYFLAT', $_POST) && $_POST['IS_PRIVACYFLAT'] == '1'){
 		if(empty($_POST['NAME_USER'])){
 			$ERR_CRUD['NAME_USER'] = NOT_NULL_ERR;
@@ -83,7 +114,47 @@ if(array_key_exists("subDo",$_POST) || array_key_exists("subBack",$_POST)){
 			$ERR_CRUD['SURNAME_USER'] = NOT_NULL_ERR;
 			$db -> SURNAME_USER -> css = 'alert_red';
 		}
+	}
 	
+	/*
+	 * before save superficie netta riscaldata e superficie lorda riscaldata 
+	 * */
+	$rec['NETAREA'] = str_replace(',', '.', $_POST['NETAREA']);
+	$rec['GROSSAREA'] = str_replace(',', '.', $_POST['GROSSAREA']);
+	
+	/*
+	 * gestisce i valori 0.00
+	 * */
+	if($rec['NETAREA']<=0){
+		$rec['NETAREA']=0;
+	}
+	if($rec['GROSSAREA']<=0){
+		$rec['GROSSAREA']=0;
+	}
+	
+	/*
+	 * azzera precedenti errori rilevati
+	 * */
+	$ERR_CRUD['NETAREA']='';
+	$ERR_CRUD['GROSSAREA']='';
+
+	if($rec['NETAREA'] + $rec['GROSSAREA'] == 0){
+		$ERR_CRUD['NETAREA'] = NOT_NULL_ERR;
+		$db->NETAREA->css = 'alert_red';
+		$ERR_CRUD['GROSSAREA'] = NOT_NULL_ERR;
+		$db->GROSSAREA->css = 'alert_red';
+	}
+	
+	/*
+	 * superficie netta = 0,80 x superficie lorda
+	 * grossarea=100 netarea=80 (100*0.8)
+	 * netarea=80 grossarea=100 (80/0.8)
+	 * */
+	if($rec['NETAREA']>0 && empty($rec['GROSSAREA'])){
+		$rec['GROSSAREA']= $rec['NETAREA'] / COEF_AREA;
+	}
+	elseif(empty($rec['NETAREA']) && $rec['GROSSAREA']>0){
+		$rec['NETAREA']= $rec['GROSSAREA'] * COEF_AREA;
 	}
 	
 	if(err::allfalse($ERR_CRUD)){
@@ -96,6 +167,7 @@ if(array_key_exists("subDo",$_POST) || array_key_exists("subBack",$_POST)){
 		$backUri[$msg_krud]="1";
 		
 		if(err::allfalse($ERR_CRUD)){
+			
 			$id = $crud == 'ins' ? mysql_insert_id() : $id;
 			if(empty($id)) { $id = $crud == 'ins' ? $rec[$db->primkey->name] : $id; }
 			if($crud=='ins'){
@@ -106,17 +178,26 @@ if(array_key_exists("subDo",$_POST) || array_key_exists("subBack",$_POST)){
 				unset($backUri[$msg_krud]);
 			}
 			if($crud=='ins'){ # IN CASO DI INSERIMENTO RICARICO LA PAGINA IN MODALITA' UPDATE
-			
-				$code_flat = sole::mk_nameflat($_REQUEST['ID_BUILDING']);
-				
+				$code_flat = sole::mk_nameflat($_POST['ID_BUILDING']);
 				$code_activation = stringa::random_alfanum(5);
 				
-				$qCodeFlat = "UPDATE flats SET CODE_FLAT = '$code_flat', ACTIVATION_CODE = '$code_activation' WHERE ID_FLAT = '$id'";
-				mysql_query($qCodeFlat);
-			
-				io::headto($MYFILE -> file, array_merge($backUri, array('crud' => 'upd', 'id' => $id, 'ack' => 'Nuovo record inserito', 'def_build' => $_REQUEST['ID_BUILDING'])));
+				$q = "UPDATE flats SET CODE_FLAT = '$code_flat', ACTIVATION_CODE = '$code_activation' WHERE ID_FLAT = '$id'";
+				mysql_query($q);
 			}
-			$MYFILE -> add_ack('Aggiornamento riuscito');
+			
+			/*
+			 * gestione redirect
+			 * */
+			$ack = $crud=='ins' ? INS_RECORD : UPD_RECORD;
+			
+			if(array_key_exists('addnew', $_POST)){
+				$crud='ins';
+				$vars=array('crud' => 'ins', 'ack' => $ack, 'def_build' => $_POST['ID_BUILDING'], 'addnew'=>1);
+				unset($backUri['id']);
+			} else {
+				$vars=array('crud' => 'upd', 'ack' => $ack, 'id' => $id);
+			}
+			io::headto($MYFILE->file, array_merge($backUri, $vars));
 		}
 	}
 }
@@ -151,7 +232,7 @@ $send_vars = $_GET;
 $send_vars = arr::_unset($send_vars, array('err','ack'));
 $action = url::get(FILENAME.'.php', $send_vars);
 
-$db -> NETAREA -> css = 'decimal';
+// $db->NETAREA->css = 'decimal';
 
 # ESEMPI:
 # $db -> NAME_FIELD -> addblank = true;
@@ -161,9 +242,7 @@ $db -> IS_INFORM -> lable = '';
 
 $db -> NAME_USER -> id = 'NAME_USER';
 $db -> SURNAME_USER -> id = 'SURNAME_USER';
-/* $db -> IS_INFORM -> id = 'IS_INFORM';
-$db -> IS_PRIVACYFLAT -> id = 'IS_PRIVACYFLAT';
- */
+
 
 $def_building = $db -> ID_BUILDING -> val;
 if(!empty($def_build) && $crud == "ins"){
@@ -171,13 +250,28 @@ if(!empty($def_build) && $crud == "ins"){
 }
  
 $rec_blds = sole::building_user(false);
+
+if($crud=='upd'){
+	$sel_bld='';
+	foreach($rec_blds as $row){
+		if($row['ID_BUILDING']==$def_building){
+			$sel_bld=$row['CODE_BLD'].'<input type="hidden" name="ID_BUILDING" value="'.$row['ID_BUILDING'].'" />';
+			break;
+		}
+	}
+} else {
 $sel_bld = io::select_from_recordset($rec_blds, 'ID_BUILDING', 'CODE_BLD', $def_building, '- '.CHOOSE, array('name' => 'ID_BUILDING', 'id' => 'sel_bld'));
+}
+
+/*
+ * stampa del codice di attivazione
+ * */
+$etichetta = $crud=='upd' ? ACTIVATION_CODE.': '.$rec_scheda['ACTIVATION_CODE'] : '';
 
 include_once HEAD_AR;
 print $sub_menu;
 # CONFIGURAZIONE 2 DI 2 ##################################################
 if($crud == 'upd'){
-	//$db -> ID_BUILDING -> type = 'slable';
 }
 
 $show_hide = '';
@@ -186,6 +280,7 @@ if($user -> idg == 3){
 	$show_hide = ' class="dn"';
 	
 	$db -> NETAREA -> type = 'lable';
+	$db->GROSSAREA->type = 'lable';
 }
 $db -> CODE_FLAT -> type = 'lable';
 
@@ -197,22 +292,30 @@ $db -> CODE_FLAT -> type = 'lable';
   <?=request::hidden($backUri)?>
     <table class="list">    
       <tr class="bg">      
-        <th width="30%"><?=$href_lista?> <?=$href_new?></th>
+        <th width="30%"><?=$href_lista?></th>
         <th>&nbsp;</th>
       </tr>    
-	<? if($crud=='upd'){
-		print'<tr class="yellow"><td colspan="6"><div class="table_cell"><strong>'.$etichetta.'</strong></div></td></tr>';
-	  }
+      <?
+		if($crud=='upd'){
 ?>
+      <tr class="yellow"><td colspan="6"><div class="table_cell"><strong><?=$rec_scheda['CODE_FLAT']?> <?=$etichetta?></strong></div></td></tr>
+		<? } ?>		
 
+<tr>
+  <td valign="top"><div class="table_cell"><strong><?=CODE_FLAT?></strong></div></td>
+  <td><div class="table_cell" id="flatcode"><?=$rec_scheda['CODE_FLAT']?></div></td>
+</tr>
 <tr<?=$show_hide?>>
   <td valign="top"><div class="table_cell"><strong><?=ID_BUILDING?>*</strong></div></td>
   <td><div class="table_cell"><?=$sel_bld?></div></td>
 </tr>
-
 <tr class="dn sh">
-  <td valign="top"><div class="table_cell"><strong><?=NETAREA?>*</strong></div></td>
+  <td valign="top"><div class="table_cell"><strong id="netarea"><?=NETAREA?></strong></div></td>
   <td><div class="table_cell"><? $db -> NETAREA -> get(); ?></div></td>
+</tr>
+<tr class="dn sh">
+  <td valign="top"><div class="table_cell"><strong id="grossarea"><?=GROSSAREA?></strong></div></td>
+  <td><div class="table_cell"><? $db->GROSSAREA->get(); ?></div></td>
 </tr>
 
 <tr class="dn sh">
@@ -239,7 +342,16 @@ $db -> CODE_FLAT -> type = 'lable';
 <td>&nbsp;</td>
 <td>
 <input type="hidden" name="subDo" value="salva" />
-<input id="subDo" type="button" value="<?=SAVE?>" class="g-button g-button-yellow" />
+<div class="campo_form">
+	<input id="subDo" type="submit" value="<?=SAVE?>" class="g-button g-button-yellow" />
+</div>
+<div class="campo_form" style="margin-top:7px;">
+	<?
+	$checked = array_key_exists('addnew', $_GET) ? ' checked="checked"' : '';
+	?>
+	<input type="checkbox" id="addnew" name="addnew" value="1"<?=$checked?> />
+	<label for="addnew"><?=ADDNEWFLAT?></label>
+</div>
 </td>
 </tr>
 
@@ -250,7 +362,6 @@ $db -> CODE_FLAT -> type = 'lable';
 </table>
 </form>
 
-<script type="text/javascript" src="<?=JS_MAIN.'flats-users.js'?>" /></script>
 <?php
 include_once FOOTER_AR;
 ?>

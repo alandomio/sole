@@ -4,19 +4,15 @@ $user = new autentica($aA5);
 $user -> login_standard();
 
 $html['select_building'] = sole::select_fhb('');
-/*
-$input = new io();
-$input -> type = 'select';
-$input -> addblank = true;
-$input -> aval = array(1,2,3,4,5,6,7,8,9,10,11,12);
-$input -> css = 'duecento';
-$input -> id = 'upload_type';
-$input -> txtblank = S_CHOOSE.' '.strtolower(UPLOADTYPE);
-$upload_type = $input -> set('upload_type');
-*/
+
+$MYFILE->add_js_group('measures12', array(
+		JS_MAIN.'measures12.js',
+),
+		10, 'onoff', 'footer');
 
 include_once HEAD_AR;
 ?>
+<div id="container_convalida">
 <div id="col_left" class="duecentocinquanta" style="min-height:10px;">
 
 <div id="box-col-left" class="fixed_position">
@@ -75,7 +71,7 @@ if($user -> idg <= 2){
 </div>
 </div>
 <div class="clear"></div>
-
+</div>
 <div id="dialog-download" class="hide inputfull">
 <form id="frm-add-model" method="post" action="ajax/templates.php?action=add_new_model">
 <div id="selected_building"></div>
@@ -94,9 +90,6 @@ if($user -> idg <= 2){
 <label><?=CHOOSE_MONTH?></label>
 <? print sole::select_months('date_month') ?>
 </div>
-
-
-<script type="text/javascript" src="<?=JS_MAIN.'measures12.js'?>" /></script>
 <?php
 include_once FOOTER_AR;
 ?>

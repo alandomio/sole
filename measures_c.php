@@ -122,7 +122,7 @@ $href_lista = io::a($scheda->file_l, $val, LISTA, array('title' => LISTA, 'class
 $href_add_file = ($crud == 'upd' && !empty($scheda -> files)) ? io::a($scheda->file_f, $backUri, ADD_FILE, array('title' => ADD_FILE, 'class' => 'puls_aggiungi')) : '';
 
 $db -> ID_USER -> addblank = true;
-$db -> ID_USER -> txtblank = S_CHOOSE.' FM';
+$db->ID_USER->txtblank = S_CHOOSE.' GM';
 
 $sub_menu = '';
 foreach($sub_nav as $k => $arr){

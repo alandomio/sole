@@ -24,11 +24,9 @@ $sublable = arr::arr2constant($aShowList, false);
 
 $qTotRec .= ' '.$my_vars->where;
 
-
 $cursor = new cursor($qTotRec, $scheda -> offset);
 $cursor -> set_passo(5);
 $cursor -> set_mode('full'); # simple normal full
-
 
 $backUri = array_merge($my_vars->href);
 $backUriHidden=array_merge($my_vars->hidden);
@@ -56,8 +54,9 @@ foreach($rs as $rec){
 	$color = $cnt%2==0 ? '' : ' class="contrast"';
 	
 	$href[EDIT] = io::a($scheda->file_c, array_merge($backUriIds, array('crud' => 'upd')), EDIT, array('class' => 'href'));
-	$href[ADDRESS_FED] = io::a('federations_address.php', array_merge($backUriIds, array('crud' => 'upd')), ADDRESS_FED, array('class' => 'href'));
-	$href[CONVERSION_FED] = io::a('federations_conversions.php', array_merge($backUriIds, array('crud' => 'upd')), CONVERSION_FED, array('class' => 'href'));
+	// $href[ADDRESS_FED] = io::a('federations_address.php', array_merge($backUriIds, array('crud' => 'upd')), ADDRESS_FED, array('class' => 'href'));
+	$href[COEFFICIENTS] = io::a('federations_conversions.php', array_merge($backUriIds, array('crud' => 'upd')), COEFFICIENTS, array('class' => 'href'));
+	$href[USAGE] = io::a('federations_usages.php', array_merge($backUriIds, array('crud' => 'upd')), USAGE, array('class' => 'href'));
 
 # FORMATTAZIONE PARTICOLARE DI ALCUNI CAMPI ########################################
 # FINE CONFIGURAZIONE CAMPI LISTA ##################################################

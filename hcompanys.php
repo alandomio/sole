@@ -22,7 +22,7 @@ $qTotRec = $scheda->query_list;
 
 $sublable = arr::arr2constant($aShowList, false);
 
-/* if($user -> idg == 2){ # MOSTRO SOLO GLI UTENTI MHCU DELLA FEDERAZIONE
+/* if($user->idg == 2){ # MOSTRO SOLO GLI UTENTI MHMU DELLA FEDERAZIONE
 	$qTotRec .= "
 RIGHT JOIN users_federations ON users.ID_USER = users_federations.ID_USER
 ";

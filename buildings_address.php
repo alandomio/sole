@@ -1,5 +1,4 @@
 <?php
-# V.0.1.8
 include_once 'init.php';
 list($il, $jsstatis) = request::get(array('il' => NULL,'jsstatis' => NULL));
 
@@ -8,8 +7,63 @@ $user -> login_standard();
 include_once stringa::get_conffile($MYFILE -> filename);
 $scheda -> img = false;
 
+if( array_key_exists('action', $_REQUEST)){
+	$action = prepare($_REQUEST['action']);
+
+	if($action=='save_address'){
+		$success='r';
+		$message=__('salvataggio non riuscito');
+		$loc='';
+		$add='';
+		
+		$id = prepare4sql($_POST['ID_BUILDING']);
+		
+		if( ! empty($id) && is_numeric($id)){
+			
+			$q="SELECT LOCALITY, ADDRESS_BLD FROM buildings WHERE ID_BUILDING={$id} LIMIT 1";
+			$row=rs::rec2arr($q);
+			
+			$loc=$row['LOCALITY'];
+			$add=$row['ADDRESS_BLD'];
+			
+			$q="UPDATE buildings SET 
+				LOCALITY='".prepare4sql($_POST['LOCALITY'])."',
+				ADDRESS_BLD='".prepare4sql($_POST['ADDRESS_BLD'])."',
+				LAT_BLD='".prepare4sql($_POST['LAT_BLD'])."',
+				LNG_BLD='".prepare4sql($_POST['LNG_BLD'])."'
+				WHERE
+				id_building={$id}";
+			
+			if(mysql_query($q)){
+				$success='g';
+				$message=__('indirizzo aggiornato');
+			}
+		}
+		
+		exit(json_encode(array('success'=>$success, 'message'=>$message,'loc'=>$loc,'add'=>$add)));
+	}
+	elseif($action='save_coords'){
+		$success='r';
+		$message=__('salvataggio non riuscito');
+		
+		$id = prepare4sql($_REQUEST['id']);
+		$lat = prepare4sql($_REQUEST['lat']);
+		$lng = prepare4sql($_REQUEST['lng']);
+	
+		if( ! empty($id) && ! empty($lat) && ! empty($lng)){
+			$q="UPDATE buildings SET LAT_BLD='{$lat}', LNG_BLD='{$lng}' WHERE ID_BUILDING='{$id}'";
+			if(mysql_query($q)){
+				$success='g';
+				$message=__('coordinate aggiornate');
+			}
+		}
+		exit(json_encode(array('success'=>$success, 'message'=>$message)));
+	}
+}
+
+$MYFILE->add_js('https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=places&language='.strtolower(LANG_DEF), 5);
+
 $MYFILE -> add_js('
-<script type="text/javascript">
 	$(function() {
 		height = $(document).height();
 		width = $(document).width();
@@ -22,10 +76,9 @@ $MYFILE -> add_js('
 		$("#map_canvas").css("height", height + "px");
 		$("#map_canvas").css("width", width + "px");
 	});
-</script>' ,'code', 'head');
+', 10,  'head', 'code');
 
 $MYFILE -> add_js('
-<script type="text/javascript">
 function invia() {
 	var str = $("form").serialize();
 	//$("#result").text(str);
@@ -43,7 +96,7 @@ function addChange(){
 $(document).ready(function(){
 	addChange();
 })
-</script>' ,'code', 'head');
+', 20,  'head', 'code');
 
 if(!isset($configura)) $configura = new configura('descriptors');
 
@@ -172,8 +225,6 @@ $send_vars = $_GET;
 $send_vars = arr::_unset($send_vars, array('err','ack'));
 $action = url::get(FILENAME.'.php', $send_vars);
 
-//$db -> INF_ART -> css = 'decimal';
-
 $sgmaps = ''; $html['gmaps'] = '';
 
 $coords = DEF_COORDS;
@@ -181,39 +232,17 @@ if(!empty($db -> LAT_BLD -> val)){
 	$coords = $db -> LAT_BLD -> val.', '.$db -> LNG_BLD -> val;
 }
 
-$MYFILE -> add_js('<script type="text/javascript" src="js/maps/maps_buildings.js"></script>', 'file', 'head');
-$MYFILE -> add_js('<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>', 'file', 'head');
+//$MYFILE->add_js('http://maps.google.com/maps/api/js?sensor=false', 1, 'head', 'file');
+$MYFILE->add_js_group('buildings_address', array(
+		'js/jquery/jquery.typing.js',
+		'js/buildings_address.js',
+),
+		10, 'on', 'footer');
 
 
-
-/* $MYFILE -> add_js('<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>', 'file', 'head');
-$MYFILE -> add_js('<script type="text/javascript">
-  function initialize() {
-    var latlng = new google.maps.LatLng('.$coords.');
-    var myOptions = {
-      zoom: 14,
-      center: latlng,
-      mapTypeId: google.maps.MapTypeId.ROADMAP
-    };
-    map = new google.maps.Map(document.getElementById("map_canvas"),
-        myOptions);
-	var marker = new google.maps.Marker({map: map, position: map.getCenter()});
-  }
-</script>
-', 'code', 'head'); */
-//$initialize = $body_ini;
 
 $html['gmaps'] = '<div id="map_canvas"></div>
 ';
-
-/* $db -> LAT_BLD -> id = 'lat';
-$db -> LNG_BLD -> id = 'lng';
-
-$db -> LAT_BLD -> css = 'sessanta';
-$db -> LNG_BLD -> css = 'sessanta';
-$db -> ADDRESS_BLD -> css = 'dtrenta'; */
-
-
 
 $db -> LAT_BLD -> id = 'lat';
 $db -> LNG_BLD -> id = 'lng';
@@ -231,29 +260,48 @@ $db -> ADDRESS_BLD -> css = 'dtrenta';
 
 include_once HEAD_AR;
 print $sub_menu;
-# CONFIGURAZIONE 2 DI 2 ##################################################
-if($crud == 'upd'){
-	//$db -> ID_LABLE_SITE -> type = 'lable';
-}
-# FINE CONFIGURAZIONE 2 DI 2 #############################################
 ?>
 <table class="dark">
 <tr class="bg">
-<th colspan="2"><?=$href_lista?> <?=$href_new?> <input id="puls_save" type="button" value="<?=SAVE?>" class="g-button g-button-yellow" /><div id="result"></div></th>
+<th colspan="2"><?=$href_lista?> <?=$href_new?> <div id="result"></div></th>
 </tr>
 <tr><td valign="top" style="width:250px">
-<form id="myForm" name="myForm" method="post" action="<?=$action?>">
-<input type="hidden" name="subDo" id="subDo" value="" />
-<div id="wizard">
-<?php
-include_once AJAX.'buildings_form.php';
-?>
-<? $db -> ADDRESS_BLD -> get(); ?>
-<br />
-<? $db -> LAT_BLD -> get(); ?> <? $db -> LNG_BLD -> get(); ?>
 
+	<form id="frm-address" method="post" action="buildings_address.php">
+		<input type="hidden" name="action" value="save_address"/>
+		<input type="hidden" name="ID_BUILDING" value="<?=$id?>"/>
+
+		<div id="wizard" class="hide">
+		
+			<div class="campo_form"><label for="inputcomune"><?=__('Comune')?>:</label>	
+				<input type="text" id="inputcomune" name=comune class="input_form text " style="width:218px;">
+			</div>
+			
+			<div class="campo_form"><label for="inputindirizzo"><?=__('Indirizzo')?>:</label>	
+				<input type="text" id="inputindirizzo" name=indirizzo class="input_form text " style="width:218px;">
+			</div>
+			
+			<? $db->LAT_BLD->get(); ?>
+			<? $db->LNG_BLD->get(); ?>
+				
+			<div class="campo_form">
+				<input type="button" value="<?=__('Salva')?>" id="save-address" class="g-button g-button-yellow" />
+				<input type="button" value="<?=__('Indietro')?>" id="btn-hide-form" class="g-button" />
+			</div>
+		
+		</div>
+		
+		<div id="saved-address" style="position:relative;">
+			<div class="campo_form"><label for="LOCALITY"><?=__('Comune')?>:</label>	
+				<input type="text" id="LOCALITY" name="LOCALITY" class="input_form text" readonly="readonly" value="<?=$db->LOCALITY->val?>" style="width:256px; background-color:#fff; border:none">
+			</div>
+			<div class="campo_form"><label for="ADDRESS_BLD"><?=__('Indirizzo')?>:</label>	
+				<input type="text" id="ADDRESS_BLD" name="ADDRESS_BLD" class="input_form text" readonly="readonly" value="<?=$db->ADDRESS_BLD->val?>" style="width:256px; background-color:#fff; border:none">
+			</div>
+			<input type="button" value="<?=__('Cambia indirizzo')?>" id="change-address" class="g-button" style="width:260px;"/>
 </div>
 </form>
+
 </td><td id="content_map">
 <div id="wizard_right">
 <?php
@@ -268,36 +316,5 @@ print $html['gmaps'];
 </tr>
 </table>
 <?php
-ob_start();
-?>
-<script type="text/javascript">
-$(document).ready(function(){
-	var lat = $('#lat').val();
-	var lng = $('#lng').val();
-	var myOptions = {
-		zoom: 14,
-		center: new google.maps.LatLng( lat, lng),
-		mapTypeId: google.maps.MapTypeId.ROADMAP
-	};
-	map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
-	initialize_marker(map);
-	$('#indirizzo').typing({
-		 stop: function (event, $elem) {
-			geocodifica(map);
-		 },
-		 delay: 500
-	});
-
-	$('#puls_save').click(function(){
-		$('#subDo').val('Save');
-		$('#myForm').submit();
-	});
-})
-</script>
-<?php
-$gmaps_code = ob_get_clean();
-
-$MYFILE -> add_js('<script type="text/javascript" src="js/jquery/jquery.typing.js"></script>', 'file', 'footer');
-$MYFILE -> add_js($gmaps_code, 'code', 'footer');
 include_once FOOTER_AR;
 ?>

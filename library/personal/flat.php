@@ -1,35 +1,64 @@
 <?php
 
 class flat	{
+	
+	var $conversion_unit;
+	
 	public function flat($id_flat)	{
 		$this->id = $id_flat;
 		$this->id_building = $this->get_building_id();
+		$this->conversion_unit = $this->get_conversion_units($this->id_building);
+		//var_dump($this->conversion_unit);
+		
+		
 	}
 	
-	function get_consumptions ($usage, $anno, $uploadtype, $type='NPVFULL', $id_flat=NULL) {
+	
+	function get_conversion_units($id_building)	{
+		$sql = "SELECT federations_conversions.ID_METERTYPE, COALESCE(buildings_conversions.EP, federations_conversions.EP) AS p,
+									COALESCE(buildings_conversions.CO2, federations_conversions.CO2) AS c,
+									COALESCE(buildings_conversions.EURO, federations_conversions.EURO) AS e,
+									1 AS f
+				  FROM federations_conversions
+					LEFT JOIN hcompanys USING(ID_FEDERATION)
+					LEFT JOIN buildings USING(ID_HCOMPANY)
+					LEFT JOIN buildings_conversions USING(ID_BUILDING)
+					
+					
+					WHERE buildings.ID_BUILDING=" . $id_building;
+					
+		//echo $sql;
+		
+		$data = rs::inMatrix($sql);
+		//var_dump($data);
+		foreach($data as $k=>$v)	{
+			$conversion_unit[$v['ID_METERTYPE']] = $v;
+		}
+		
+		return $conversion_unit;
+		
+	}
+	
+	function get_consumptions ($usage, $anno, $uploadtype, $type='NPVFULL', $source='f', $id_flat=NULL, $nze='false', $area='n') {
 		//echo $uploadtype;
 		if($id_flat==NULL)
 			$id_flat = $this->id;
-		$sql = "SELECT measures.ID_MEASURE FROM flats_meters
-					LEFT JOIN meters USING(ID_METER)
-					LEFT JOIN measures USING(ID_METER)
-					WHERE flats_meters.ID_FLAT=" . $id_flat .
-				" AND meters.K2_ID_USAGE=" . $usage .
-				" AND measures.ANNO_MS=" . $anno .
-				" AND measures.ID_UPLOADTYPE=" . $uploadtype;
-		//echo $sql;
-		$meters = rs::inMatrix($sql);
+		
+		$meters = flat::get_measures($usage, $anno, $uploadtype, $id_flat, $nze);
+		
+// 		echo BR;
+// 		var_dump($meters);
+// 		echo BR;
 		
 		$overallstatus = 'valid';
 		foreach($meters as $meter)	{
 
-			$dati = misurazioni::get_output($meter['ID_MEASURE'], $this->id, $type);
+			$dati = misurazioni::get_output($meter['ID_MEASURE'], $id_flat, $type, $source, $nze, $area);
 			
-			//var_dump($dati);
 			
-			//if($meter['ID_METER']==781)
-				//var_dump($dati);
-			//error_log($dati);
+			
+			// Moltiplico il valore della misurazione per il coefficiente di conversione dell'energia che voglio visualizzare - $source
+//			$consumptions += $dati['value'] * $this->conversion_unit[$meter['ID_METERTYPE']][$source];
 			$consumptions += $dati['value'];
 			$status = $dati['status'];
 			
@@ -44,6 +73,49 @@ class flat	{
 		return array('value' => $consumptions, 'status' => $overallstatus);
 	}
 	
+	
+	static function get_measures($usage, $anno, $uploadtype, $id_flat, $nze=false)	{
+		
+		if($nze)
+			$sql = "SELECT DISTINCT measures.ID_MEASURE, meters.ID_METERTYPE FROM flats_meters
+						LEFT JOIN meters USING(ID_METER)
+						LEFT JOIN measures USING(ID_METER)
+						LEFT JOIN (SELECT DISTINCT ID_METER,
+								GROUP_CONCAT(DISTINCT nzeusages.ID_NZEUSAGE ORDER BY nzeusages.ID_NZEUSAGE ASC SEPARATOR ',') AS USAGES
+							FROM meters
+								LEFT JOIN meters_usages USING (ID_METER)
+								LEFT JOIN nzes USING (ID_METER)
+								LEFT JOIN nzes_nzeusages USING(ID_NZE)
+								LEFT JOIN nzeusages USING(ID_NZEUSAGE)
+								LEFT JOIN flats_meters	USING ( ID_METER )
+								WHERE flats_meters.ID_FLAT=" . $id_flat .
+										" GROUP BY ID_METER) AS aggr_usages USING(ID_METER)
+										WHERE aggr_usages.USAGES='$usage' " .
+		
+										" AND measures.ANNO_MS=" . $anno .
+										" AND measures.ID_UPLOADTYPE=" . $uploadtype;
+		else
+			$sql = "SELECT DISTINCT measures.ID_MEASURE, meters.ID_METERTYPE FROM flats_meters
+						LEFT JOIN meters USING(ID_METER)
+						LEFT JOIN measures USING(ID_METER)
+						LEFT JOIN (SELECT DISTINCT ID_METER,
+								GROUP_CONCAT(DISTINCT meters_usages.ID_USAGE ORDER BY meters_usages.ID_USAGE ASC SEPARATOR ',') AS USAGES
+							FROM meters
+								LEFT JOIN meters_usages USING (ID_METER)
+								LEFT JOIN nzes USING (ID_METER)
+								LEFT JOIN flats_meters	USING ( ID_METER )
+								WHERE flats_meters.ID_FLAT=" . $id_flat .
+										" GROUP BY ID_METER) AS aggr_usages USING(ID_METER)
+										WHERE aggr_usages.USAGES='$usage' " .
+											
+										" AND measures.ANNO_MS=" . $anno .
+										" AND measures.ID_UPLOADTYPE=" . $uploadtype;
+		//echo $sql;
+		return rs::inMatrix($sql);
+		
+		
+	}
+	
 	function get_netarea($anno, $uploadtype)	{
 		$flat = rs::rec2arr("SELECT NETAREA, IS_OCCUPIED FROM flats LEFT JOIN occupancys USING(ID_FLAT) WHERE flats.ID_FLAT={$this->id} AND occupancys.ANNO_MS=$anno AND occupancys.ID_UPLOADTYPE=$uploadtype LIMIT 1");
 		$area = $flat['NETAREA'] * $flat['IS_OCCUPIED'];
@@ -52,7 +124,7 @@ class flat	{
 	
 	}
 	
-	function get_meter_consumptions ($meter, $anno, $uploadtype, $type='NPVFULL') {
+	function get_meter_consumptions ($meter, $anno, $uploadtype, $type='NPVFULL', $source='f') {
 		//echo $uploadtype;
 		$sql = "SELECT * FROM meters
 					LEFT JOIN metertypes USING(ID_METERTYPE)
@@ -86,6 +158,32 @@ class flat	{
 		return array('value' => $consumptions, 'status' => $overallstatus);
 		
 	
+	}
+	
+	/**
+	 * @param unknown_type $type ('a', 'm2')
+	 * @param unknown_type $source ('f', 'p', 'c')
+	 * @param unknown_type $metertype
+	 * @param unknown_type $anno
+	 * @param unknown_type $uploadtype
+	 */
+	function get_value($type, $source, $metertype, $anno, $uploadtype, $bilancio='t', $area='n')	{
+		//echo $area;
+		if($bilancio=='b')
+			$nze = true;
+		else
+			$nze = false;
+		
+		if($type == 'a')	
+			$r = $this->get_consumptions ($metertype, $anno, $uploadtype, 'NPVFULL', $source, $this->id, $nze, $area);
+		else
+			$r = $this->get_consumptions ($metertype, $anno, $uploadtype, 'NPVM2', $source, $this->id, $nze, $area);
+		
+		if($r['value']!=null)
+			return array('value' => $r['value'], 'status' => $r['status']);
+		else
+			return array('value' => 0, 'status' => 'nd');
+		
 	}
 	
 	function get_npv ($metertype, $anno, $uploadtype)	{
@@ -219,6 +317,11 @@ class flat	{
 	
 	function primary_energy ()	{
 	
+	}
+	
+	
+	function convert()	{
+		
 	}
 	
 	function get_first_year()	{

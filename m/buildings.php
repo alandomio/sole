@@ -4,7 +4,7 @@ $user = new autentica($aA5);
 $user -> login_auto(''); # ENTRA NELLA PAGINA INTERNA SE L'UTENTE È GIÀ LOGGATO
 
 	/*
-	UU: UPLOADER USER are MHCU and those HCU or HHU who has been selected by the MHCU to upload consumption and production data for one or a selected number of buildings. Flag IS_UPLOADER in users, si presuppone che in default gli ADMIN, FM, MHCU siano upload users	
+	UU: UPLOADER USER are MHMU and those HMU or HHU who has been selected by the MHMU to upload consumption and production data for one or a selected number of buildings. Flag IS_UPLOADER in users, si presuppone che in default gli ADMIN, GM, MHMU siano upload users	
 	*/
 
 /* ESEMPIO INTESTAZIONE A PULSANTIERA

@@ -100,9 +100,10 @@ $swf->file_queue_limit = $swf_limite;
 //$swf->debug = 'true';
 $swf->set_gradient();
 
-$MYFILE -> add_js($swf -> jsc,'code', 'head');
-$MYFILE -> add_js($swf -> jsf,'file', 'head');
 $MYFILE -> add_css($swf -> css);
+$MYFILE->add_js($swf->jsf, 50, 'head', 'file');
+$MYFILE->add_js($swf->jsc, 50, 'head', 'code');
+
 
 $href_annulla = io::ahrefcss($scheda->file_l, $val=$backUri, $txt=CANCEL,$js='',$target="",$title=CANCEL, '', $css="g-button");
 $href_add_file = $scheda->files ? io::ahrefcss($scheda->file_f,$val=$backUri, $txt=ADD_FILE,$js='',$target="",$title=ADD_FILE, '', $css="puls_aggiungi") : '';

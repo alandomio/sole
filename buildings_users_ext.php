@@ -73,7 +73,7 @@ if(array_key_exists('upd',$_GET) || array_key_exists('upd',$_POST)){
 	//$scheda->many_to_many_tot($id);
 }
 
-$scheda->etichetta = 'Contatori'; // 'se non specificata qui, è il nome tabella senza la s finale'
+$scheda->etichetta = 'Contatori'; // 'se non specificata qui, ï¿½ il nome tabella senza la s finale'
 $etichetta = $rec_ext['USER'];
 
 $q_ext = "SELECT * FROM ".$mmv['tbmm']." WHERE ".$mmv['id2d']." = '$id'";
@@ -82,10 +82,19 @@ $ext_ids = arr::semplifica($a_ext, $scheda -> f_id);
 $tot_ext = count($ext_ids);
 
 $aInfo = array();
-$sub_nav['Scheda'] = array('buildings_c.php');
-$sub_nav['Indirizzo'] = array('buildings_address.php');
+
+/*
+ * tabs sottomenu
+ * */
+$sub_nav[CHART] = array('buildings_c.php');
+if($user->idg <= 3){
+	$sub_nav[ADDRESS] = array('buildings_address.php');
 $sub_nav['Upload users ('.$tot_ext.')'] = array('buildings_users_ext.php');
+	$sub_nav[COEFFICIENTS] = array('buildings_conversions.php');
 $sub_nav[PICTURES] = array('buildings_f.php');
+	if(!empty($scheda->files)) $sub_nav[PICTURES] = array($scheda->file_f);
+}
+
 
 $is_swf=0; $is_head_mce=0; $is_multibox=0; $is_js=1;
 if(array_key_exists('del',$_GET) || array_key_exists('del',$_POST)){

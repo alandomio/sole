@@ -42,9 +42,9 @@ if($user -> idg == 2){
 	$db -> a_aval['ID_USER'] = rs::id2arr("
 	SELECT ID_USER, USER FROM users 
 	RIGHT JOIN users_federations USING(ID_USER)
-	WHERE users.ID_GRUPPI = '3'"); # SOLO MHCU LEGATI ALLA FEDERAZIONE
+	WHERE users.ID_GRUPPI = '3'"); # SOLO MHMU LEGATI ALLA FEDERAZIONE
 } else {
-	$db -> a_aval['ID_USER'] = rs::id2arr("SELECT ID_USER, USER FROM users WHERE users.ID_GRUPPI = '3'"); # SOLO MHCU
+	$db->a_aval['ID_USER'] = rs::id2arr("SELECT ID_USER, USER FROM users WHERE users.ID_GRUPPI = '3'"); # SOLO MHMU
 }
 $db->dbset();
 
@@ -148,7 +148,10 @@ if($user -> idg == 2){
 	$db -> ID_FEDERATION -> txtblank = S_CHOOSE;
 }
 $db -> ID_USER -> addblank = true;
-$db -> ID_USER -> txtblank = S_CHOOSE.' MHCU';
+$db->ID_USER->txtblank = S_CHOOSE.' MHMU';
+
+$db->DESCRIP_HC_IT->css='text_big editor';
+$db->DESCRIP_HC_EN->css='text_big editor';
 
 include_once HEAD_AR;
 print $sub_menu;

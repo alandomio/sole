@@ -1,12 +1,10 @@
 <?php
-# V.0.1.8
 class request{
-	/*function get($var,$default){
-	return array_key_exists($var,$_REQUEST) ? $_REQUEST[$var]: $default;}*/
-function get($arr=array()){ $arr2=array();
+static function get($arr=array()){ $arr2=array();
 	foreach($arr as $k => $v){
-		//print $k.' '.$v.BR;
-		# GESTISCO L'ORDINE DI IMPORTANZA DELLA VALORIZZAZIONE DELLE VARIABILI (POST, GET, REQUEST, default)
+		/*
+		 * gestisce le variabili in ordine di importanza (POST, GET, REQUEST, default)
+		 * */
 		if(array_key_exists($k, $_POST)){ $_REQUEST[$k] = $_POST[$k]; }
 		elseif(array_key_exists($k, $_GET)){ $_REQUEST[$k] = $_GET[$k]; }
 		elseif(!array_key_exists($k, $_REQUEST)){ $_REQUEST[$k] = $v; }
@@ -15,7 +13,7 @@ function get($arr=array()){ $arr2=array();
 	return $arr2;
 }
 	
-public function gKey($k){
+public static function gKey($k){
 	$ret = false;
 	if(array_key_exists($k, $_GET)){
 		$ret = true;
@@ -23,7 +21,7 @@ public function gKey($k){
 	return $ret;
 }
 	
-	function defArr($vars=array(),$aDef){
+static function defArr($vars=array(),$aDef){
 		$vars=!is_array($vars) ? $vars=array($vars) : $vars;
 		$ret=array();
 		foreach($vars as $var){
@@ -35,7 +33,7 @@ public function gKey($k){
 		}
 		
 	
-	function give($vars=array()){
+static function give($vars=array()){
 		$vars=!is_array($vars) ? $vars=array($vars) : $vars;
 		$ret=array();
 		foreach($vars as $var){
@@ -45,7 +43,7 @@ public function gKey($k){
 		return $ret;
 		}
 		
-	function hidden($arr=array()){
+static function hidden($arr=array()){
 		$str="";
 		foreach($arr as $k => $v)
 			$str.='<input type="hidden" name="'.$k.'" value="'.$v.'" />'."\n";
@@ -53,27 +51,24 @@ public function gKey($k){
 		return $str;
 	}
 		
-	function &post2arr($rec=array()){
+static function &post2arr($rec=array()){
 		$res=array();
 		foreach($rec as $k=>$v) {
-			//echo $k .BR;
 			if(array_key_exists($k,$_POST) ){
 					$res[$k]=$_POST[$k]; }
 				}
-		//exit(arr::r($rec));
 		return $res;}
 	
-	function toupper($request=array(),$arrup=array()){
+static function toupper($request=array(),$arrup=array()){
 		foreach($request as $k=>$v){
 			if(in_array($k,$arrup)){
 				$request[$k]=strtoupper($v);}	
-			//echo $k." ".strtoupper($v).BR;
 			}
 		
 		return $request;
 		}
 		
-	function adjustPost($request){
+static function adjustPost($request){
 		foreach($request as $k=>$v){
 			if( strpos($k,"_chkhid")!== false ){ 
 				$k2=stringa::leftfrom($k,"_chkhid");
@@ -113,12 +108,7 @@ public function gKey($k){
 					}
 				}
 			}
-			//print_r($request);
 		return  $request;
-		
-		}#end hhmm		
-
-
 }
-
+}
 ?>

@@ -105,37 +105,35 @@ if(array_key_exists('action', $_POST)){
 				$qDeleMeasures = "DELETE FROM measures WHERE ID_METER='{$meter['ID_METER']}'";
 				// elimino i dati dei consumi
 				$qDeleConsumption = "DELETE FROM consumptions WHERE ID_METER = '{$meter['ID_METER']}'";
+				
+				
+				
+				
 				// elimino i misuratori di produzione
-				$qDeleMeterProduction = "DELETE FROM meters_productions WHERE ID_METER = '{$meter['ID_METER']}'";
+				//$qDeleMeterProduction = "DELETE FROM meters_productions WHERE ID_METER = '{$meter['ID_METER']}'";
 				// elimino il misuratore
-				$qDeleMeter = "DELETE FROM meters WHERE ID_METER = '{$meter['ID_METER']}'";
+				//$qDeleMeter = "DELETE FROM meters WHERE ID_METER = '{$meter['ID_METER']}'";
 				
 				if($esegui){
 					mysql_query($qDeleMeasures);
 					mysql_query($qDeleConsumption);
-					mysql_query($qDeleMeterProduction);
-					mysql_query($qDeleMeter);
+					sole::delete_meter($meter['ID_METER']);
 				} else {
 					echo $qDeleMeasures.BR;
 					echo $qDeleConsumption.BR;
-					echo $qDeleMeterProduction.BR;
-					echo $qDeleMeter.BR;
 				}						
 			}
 			
 			// elimino l'appartamento
-			$qDeleFlatMeter = "DELETE FROM flats_meters WHERE ID_FLAT='{$flat['ID_FLAT']}'";
 			$qDeleFlatMsoutputs = "DELETE FROM msoutputs WHERE ID_FLAT='{$flat['ID_FLAT']}'";
 			$qDeleOccupancys = "DELETE FROM occupancys WHERE ID_FLAT='{$flat['ID_FLAT']}'";
 			$qDeleFlat = "DELETE FROM flats WHERE ID_FLAT = '{$flat['ID_FLAT']}'";
 			
 			if($esegui){
-				mysql_query($qDeleFlatMeter);
 				mysql_query($qDeleFlatMsoutputs);
 				mysql_query($qDeleOccupancys);
 				mysql_query($qDeleFlat);
 			} else {
-				echo $qDeleFlatMeter.BR;
 				echo $qDeleFlatMsoutputs.BR;
 				echo $qDeleOccupancys.BR;
 				echo $qDeleFlat.BR;
@@ -146,23 +144,26 @@ if(array_key_exists('action', $_POST)){
 		$qDeleBldUsers = "DELETE FROM buildings_users WHERE ID_BUILDING = '$id'";
 		$qDeleBldMeter = "DELETE FROM meters WHERE ID_BUILDING = '$id'";
 		$qDeleBld = "DELETE FROM buildings WHERE ID_BUILDING = '$id'";
+		$qDeleBldConversions = "DELETE FROM buildings_conversions WHERE ID_BUILDING = '$id'";
+		
 		
 		if($esegui){
 			mysql_query($qDeleBldFiles);
 			mysql_query($qDeleBldUsers);
 			mysql_query($qDeleBldMeter);
 			mysql_query($qDeleBld);
+			mysql_query($qDeleBldConversions);
 		} else {
 			echo $qDeleBldFiles.BR;
 			echo $qDeleBldUsers.BR;
 			echo $qDeleBldMeter.BR;
 			echo $qDeleBld.BR;
+			echo $qDeleBldConversions.BR;
 		}
 	}
 	
 	// elimino il post
 	io::headto('remove_from_db.php', array());
-	
 }
 
 // controlli per la pagina
@@ -193,11 +194,13 @@ if(!empty($select['hc'])){
 unset($rBuilding);
 
 
-$MYFILE -> add_js('<script type="text/javascript" src="'.JS_MAIN.'remove.js" ></script>', 'file','footer');
+$MYFILE->add_js_group('remove',
+		array(JS_MAIN.'remove.js'),
+'100','head', 'file');
 
 include_once HEAD_AR;
 ?>
-
+<!-- 
 <form method="post" id="frm_hc_all">
 <table class="list">
 <tr><td width="200"><?=$select['hc']?></td><td>
@@ -205,6 +208,7 @@ include_once HEAD_AR;
 <input type="button" id="hc_all" value="Eliminazione definitiva Cooperativa" class="g-button g-button-yellow submit" style="width:240px" /></td></tr>
 </table>
 </form>
+-->
 
 <form method="post" id="frm_building_all">
 <table class="list">

@@ -26,7 +26,7 @@ function get_meters_by_idbuilding($id_bld){
 }
 
 # CONVALIDA
-function get_supplymeters_by_idbuilding($id_bld, $and){
+static function get_supplymeters_by_idbuilding($id_bld, $and){
 	$a = array(); # $a[$id_flat][$id_meter] => $aRecord
 
 	# TUTTI I CONTATORI DI UN EDIFICIO
@@ -55,7 +55,7 @@ function get_supplymeters_by_idbuilding($id_bld, $and){
 	return $a;	
 }
 
-function get_flats_and_meters_by_idbuilding($id_bld, $and){
+static function get_flats_and_meters_by_idbuilding($id_bld, $and){
 	$a = array(); # $a[$id_flat][$id_meter] => $aRecord
 
 	# TUTTI I CONTATORI DI UN EDIFICIO
@@ -115,7 +115,7 @@ function update_status($id_measure, $status){
 	return $success;
 }
 
-function order_uploads($year, $upload){
+static function order_uploads($year, $upload){
 	$cols = 3; $ret = array(); $cnt = 0;
 	for($i = $cols; $i > 0; $i--){
 		$ret[$cnt]['year'] = $year;
@@ -132,7 +132,7 @@ function order_uploads($year, $upload){
 	return $ret;
 }
 
-function get_last_measures_by_idmeter($aM, $id_uploadtype, $year){
+static function get_last_measures_by_idmeter($aM, $id_uploadtype, $year){
 	global $firephp;
 	$ret = array('F1' => 0, 'F2' => 0, 'F3' => 0, 'inputs' => '', 'mis' => '', 'mis-1' => '', 'mis-2' => '', 'data' => '', 'STATUS' => 'Null');
 	
@@ -200,6 +200,8 @@ function get_last_measures_by_idmeter($aM, $id_uploadtype, $year){
 			<input type="hidden" id="id_flat" value="'.$aM['ID_FLAT'].'" />
 			<input type="hidden" id="id_measure" name="ID_MEASURE"  value="'.$v['ID_MEASURE'].'" />
 			'.$inputs_startend;
+		} else 	{
+			$ret['data-'.($i-1)] = dtime::my2iso($v['D_MEASURE']);
 		}
 
 		$i ++;
@@ -208,6 +210,7 @@ function get_last_measures_by_idmeter($aM, $id_uploadtype, $year){
 	$alt = 'NULL';
 	# CONTATORE ELETTRICO MULTIORARIO
 	$aMis = ($aM['ID_METERTYPE'] == 1 && $aM['HMETER'] > 1) ? array('F1', 'F2', 'F3') : array('F1');
+	
 	foreach($aMis as $a => $b){
 		if($verify){
 			$mis1 = $vals[1][$b];
@@ -262,7 +265,7 @@ function get_last_measures_by_idmeter($aM, $id_uploadtype, $year){
 	return $ret;
 }
 
-function create_table_tmp_ord($year, $upload){
+static function create_table_tmp_ord($year, $upload){
 	$aSchema = self::order_uploads($year, $upload);
 	if(!rs::is_table('tmp_ord', false)){
 		mysql_query("CREATE TEMPORARY TABLE tmp_ord(ID int not null AUTO_INCREMENT, ANNO_MS int not null, ID_UPLOADTYPE int not null, PRIMARY KEY (ID))");
@@ -283,13 +286,23 @@ function chk_is_published($a){
 	}
 }
 
-function mk_validation($id_bld, $id_uploadtype, $year){
+static function mk_validation($id_bld, $id_uploadtype, $year){
+	$building_validated = true;
+	$building_published = false;
+	$allpublished = true;
+	
+	
+	$q="SELECT MONITORTYPE FROM buildings WHERE ID_BUILDING='{$id_bld}' LIMIT 1";
+	$row=rs::rec2arr($q);
+	
+	$frequenza = $row['MONITORTYPE'];
+	
 
 	// tabella temporanea di appoggio
 	self::create_table_tmp_ord($year, $id_uploadtype);
 	$aTord = rs::inMatrix("SELECT * FROM tmp_ord ORDER BY ID ASC");
 
-	$aFunctions = array('npvM2');
+	$aFunctions = array('pv', 'gp', 'npv', 'm2', 'npvM2', 'medcorr');
 	$ret['html'] = '<h2>Direct meters</h2>';
 
 	$hFields = array('PV','PVM2','NPV','NPVM2','CNPV','CNPVM2','NPVM2F1');
@@ -300,13 +313,25 @@ function mk_validation($id_bld, $id_uploadtype, $year){
 	
 	$lbl_last_ms = 'Upload '.$_REQUEST['upload'].' '.$_REQUEST['year'];
 	
-	$th_intestazione = '<th width="200">'.METER.'</th>
-	<th width="90">'.DATE.'</th>
-	<th width="130">'.$aTord[0]['ID_UPLOADTYPE'].'-'.$aTord[0]['ANNO_MS'].'</th>
-	<th width="90">'.$aTord[1]['ID_UPLOADTYPE'].'-'.$aTord[1]['ANNO_MS'].'</th>
-	<th width="90">'.$aTord[2]['ID_UPLOADTYPE'].'-'.$aTord[2]['ANNO_MS'].'</th>
-	<th width="90">NPV/m2</th>
-	<th width="90">P.VAL</th>
+	$th_intestazione = '<th width="200">'.METER.'</th>';
+	
+	$th_intestazione.= '<th width="90">'.$aTord[2]['ANNO_MS'].'-'.$aTord[2]['ID_UPLOADTYPE'].'</th>';
+	
+	if($frequenza!=12){ 
+		$th_intestazione.= '<th width="90">'.$aTord[1]['ANNO_MS'].'-'.$aTord[1]['ID_UPLOADTYPE'].'</th>';
+	}
+	
+	$th_intestazione.= '<th width="130">'.$aTord[0]['ANNO_MS'].'-'.$aTord[0]['ID_UPLOADTYPE'].'</th>';
+	
+	
+	$th_intestazione.= '
+	<th width="60">PV</th>
+	<th width="60">G/P</th>
+	<th width="60">NPV</th>
+	<th width="60">m<sup>2</sup></th>
+	<th width="60">NPV/m<sup>2</sup></th>
+	<th width="60">Corr.AVG</th>
+	<th width="60">§NPV/m<sup>2</sup></th>
 	<th width="60">Action</th>';
 	
 	$aPulsImages = array('Null' => 'Good-grey.png',
@@ -324,18 +349,25 @@ function mk_validation($id_bld, $id_uploadtype, $year){
 	// per ogni appartamento, per ogni contatore ...
 	foreach($aMF as $id_flat => $aMeters){
 		
-		$qOcc = "SELECT IS_OCCUPIED FROM occupancys WHERE ID_FLAT = '$id_flat' AND ID_UPLOADTYPE = '".$_REQUEST['upload']."' AND ANNO_MS = '".$_REQUEST['year']."' LIMIT 1";
+		$qOcc = "SELECT ID_FLAT, IS_OCCUPIED, OCCUPANCY FROM occupancys WHERE ID_FLAT = '$id_flat' AND ID_UPLOADTYPE = '".$_REQUEST['upload']."' AND ANNO_MS = '".$_REQUEST['year']."' LIMIT 1";
 		$rOcc = rs::rec2arr($qOcc);
 				
-		// valori su occupato
+		/*
+		 * valori su occupato
+		 * */
 		$checked = ' checked="checked"';
 		$icon_check = '<img src="'.IMG_LAYOUT.'icon-yes.png" /> '.OCCUPIED;
 		
-		if( $rOcc['IS_OCCUPIED'] == '' ){
-			// in default il checkbox � checkato, quindi se non esiste il record, lo creo con valore a 1
-			$qAddOcc = "REPLACE INTO occupancys SET ID_FLAT='$id_flat', IS_OCCUPIED='1', ID_UPLOADTYPE='{$_REQUEST['upload']}', ANNO_MS='{$_REQUEST['year']}'";
+		/*
+		 * valori di default se non esiste il record
+		 * e primo inserimento in occupancys
+		 * */
+		if(empty($rOcc['ID_FLAT'])){
+			$qAddOcc = "REPLACE INTO occupancys SET ID_FLAT='$id_flat', IS_OCCUPIED='1', OCCUPANCY=100, ID_UPLOADTYPE='{$_REQUEST['upload']}', ANNO_MS='{$_REQUEST['year']}'";
 			mysql_query( $qAddOcc );
+			
 			$rOcc['IS_OCCUPIED'] = 1;
+			$rOcc['OCCUPANCY'] = 100;
 		}
 		
 		if($rOcc['IS_OCCUPIED'] < 1 && is_numeric($rOcc['IS_OCCUPIED'])){
@@ -348,16 +380,23 @@ function mk_validation($id_bld, $id_uploadtype, $year){
 		$pubblica = '';
 		if(!$all_validated){ // valori da validare, in scrittura
 			$html['code'] = '<br />
-			<input class="ck-occupied" type="checkbox" name="cknumid" value="1"'.$checked.' /> '.OCCUPIED;
+			<button class="slider0" onclick="return false;">0%</button>
+			<div class="slider " value="'.$rOcc['OCCUPANCY'].'"></div>
+			<button class="slider100" onclick="return false;">100%</button>
+			<span class="slidervalue"></span>
+			<input class="ck-occupied dn" type="checkbox" name="cknumid" value="1"'.$checked.' /> '.OCCUPIED;
 			$html['code'] .= '<div class="action_publish">';
-			$html['code'] .= '<a class="publish g-button g-button-yellow" id="dir-'.$id_flat.'">'.PUBBLICA.'</a>';
+			$html['code'] .= '<a class="dn publish g-button g-button-yellow" id="dir-'.$id_flat.'">'.PUBBLICA.'</a>';
 			$html['code'] .= '</div>';
 		} else { 
 			// valori validati, in sola lettura
 			// <input class="ck-occupied" type="checkbox" name="cknumid" value="1"'.$checked.' />
 			$html['code'] = '<br />
-			<input class="dn" type="checkbox" name="cknumid" value="1"'.$checked.' />
-			'.$icon_check;
+			<div class="slider " value="'.$rOcc['OCCUPANCY'].'"></div>
+			<span style="margin-left:16px;">'.$rOcc['OCCUPANCY'].'%</span>
+			<input class="dn" type="checkbox" name="cknumid" value="1"'.$checked.' />';
+			
+			$building_validated = false;
 		}
 
 		/*
@@ -367,9 +406,10 @@ function mk_validation($id_bld, $id_uploadtype, $year){
 		$pubblica; 
 		*/
 		
-   		if(empty($nSHARED[$id_flat]) && count($aMeters) < 1){
-			$html['code'] = '<input class="ck-occupied" type="checkbox" name="cknumid" value="1"'.$checked.' /> '.OCCUPIED;
-		}
+//    		if(empty($nSHARED[$id_flat]) && count($aMeters) < 1){
+   			
+// 			$html['code'] = '<input class="ck-occupied" type="checkbox" name="cknumid" value="1"'.$checked.' /> '.OCCUPIED;
+// 		}
 	
 		$nofirst = $cnt_app == 0 ? '' : ' nofirst';
 		$misurazioni_appartamento = ''; $new_line = '';
@@ -387,23 +427,32 @@ function mk_validation($id_bld, $id_uploadtype, $year){
 			$privacy = '<div class="ok_msg" style="padding-left:28px;">'.PRIVACY_ACCETTATA.'</div>';
 		}
 		
+		// Definizione statusclass
+	
+		$status_class;
+		
 		$misurazioni_appartamento = '
 		<table class="dark appartamento validation direct'.$nofirst.'" id="'.$aFlat['ID_FLAT'].'">
-		<tr>
-		<td width="90" class="bright" valign="top">
-		<strong>'.$aFlat['CODE_FLAT'].'</strong>
-		'.$privacy.'
-		<p>'.NETAREA.BR.$aFlat['NETAREA'].'</p>
+                <tr><td colspan="'.(count($aFunctions) + 6).'" class="dati_appartamento dati_appartamento_grey"><strong>'
+                                                                .$aFlat['CODE_FLAT'].'</strong>
+                                                                <span>('.NETAREA.' '.$aFlat['NETAREA'].')</span>
 		<form method="post" id="'.$aFlat['ID_FLAT'].'">
 		<input type="hidden" name="area_flat" value="'.$aFlat['NETAREA'].'" />
 		'.$html['code'].'
 		</form>
-		</td>
+                                                        </td></tr>
+                <tr>
+                
 		<td style="padding:0" valign="top"><!-- LIST_MEASURES --></td>
 		</tr>
 		</table>';
 		
-		$new_line .= '<table class="neutra misuratore"><tr class="center">'.$th_intestazione.'</tr>';
+
+
+		
+		$new_line .= '<table class="neutra misuratore">
+						
+						<tr class="center">'.$th_intestazione.'</tr>';
 		
 		/*
 		if(count($aMeters) == 1){
@@ -422,9 +471,21 @@ function mk_validation($id_bld, $id_uploadtype, $year){
 			if($id_meter == 'flat') continue;
 			# VALORI DELLE ULTIME TRE LETTURE (LA PRIMA � MODIFICABILE)
 			$a = convalida::get_last_measures_by_idmeter($rec, $id_uploadtype, $year);
+			//var_dump($a);
 			
 			if(array_key_exists('id_measure', $a)){
 				$rs_measure = rs::rec2arr("SELECT ID_MEASURE, CNPVM2 FROM msoutputs WHERE ID_MEASURE = '{$a['id_measure']}'");
+				//var_dump($rs_measure);
+				if($rs_measure['ID_MEASURE'] > 0)	{
+					$building_published = true;
+					$published_status = 'published';
+				} else	{
+					$published_status = '';
+					$allpublished = false;
+				}
+					
+				
+				//var_dump($building_published);
 /* 				if(!empty($rs_measure['ID_MEASURE'])){
 					$puls = '<img src="images/convalida.png" alt="Ok" class="img_puls" style="padding-left:24px;" />' .
 					
@@ -445,27 +506,33 @@ function mk_validation($id_bld, $id_uploadtype, $year){
 			<li>Mt: '.$rec['MATRICULA_ID'].'</li>
 			<li>Rn: '.$rec['REGISTERNUM'].'</li>
 			</ul>
-			</td>
-			<td valign="top" class="inputvalues" align="center">'.$a['days'].$a['data'].'</td>
-			<td valign="top" class="inputvalues" align="center">'.$a['mis'].'</td>';
-			
-			// stampa la penultima misurazione
-			$new_line .= '<td class="puls_validate" valign="top" align="center">'.$a['mis-1'].'</td>';
+			</td>';
 			
 			// stampa la terzultima misurazione
-			$new_line .= '<td class="puls_validate" valign="top" align="center">'.$a['mis-2'].'</td>';
+			$new_line .= '<td class="puls_validate" valign="top" align="center">'.$a['data-2'].$a['mis-2'].'</td>';
+			// stampa la penultima misurazione
+			if($frequenza!=12){
+				$new_line .= '<td class="puls_validate" valign="top" align="center">'.$a['data-1'].$a['mis-1'].'</td>';
+			}
+			$new_line .= '<td valign="top" class="inputvalues" align="center">'.$a['days'].$a['data'].$a['mis'].'</td>';
+			
+			
+			
+			
 			
 			// stampa le colonne coi valori calcolati dinamicamente
 			foreach($aFunctions as $k => $val){
-				$new_line .= '<td width="90" class="npvm2" tipo="dir" id_tipo="'.$id_flat.'" valign="top" align="center"><span id="'.$val.'"></span>
-				<div id="turn-'.$rec['ID_METER'].'" class="turncontrols" title="'.$a['id_measure'].'">
-				<img class="restart-meter" src="images/arrow-restart.png" alt="'.$rec['ID_METER'].'" title="Full scale turn around"> 
-				<img class="change-meter" src="images/arrow-change.png" alt="'.$rec['ID_METER'].'" title="Change meter">
-				</div>
+				$new_line .= '<td width="90" class="'.$val.'" tipo="dir" id_tipo="'.$id_flat.'" valign="top" align="center"><span id="'.$val.'"></span>
+				
 				</td>';
 			}
+
+			
 			# P.VAL (valore pubblicato)
-			$new_line .= '<td valign="top" align="center">'.$rs_measure['CNPVM2'].'</td>';	
+			$new_line .= '<td valign="top" align="center" class="'.$published_status.'"><span class="pval">'.$rs_measure['CNPVM2'].'<span><div id="turn-'.$rec['ID_METER'].'" class="turncontrols" title="'.$a['id_measure'].'">
+				<img class="restart-meter" src="images/arrow-restart.png" alt="'.$rec['ID_METER'].'" title="Full scale turn around"> 
+				<img class="change-meter" src="images/arrow-change.png" alt="'.$rec['ID_METER'].'" title="Change meter">
+				</div></td>';	
 
 			$image_puls = !empty($a['STATUS']) ? $aPulsImages[$a['STATUS']] : '';
 			
@@ -484,27 +551,42 @@ function mk_validation($id_bld, $id_uploadtype, $year){
 		}
 
 		$ret['html'] .= str_replace('<!-- LIST_MEASURES -->', $new_line.'</table>', $misurazioni_appartamento);
+		
 		$cnt_app ++;
 	}
+	$ret['pubblicato'] = $building_published;
+	$ret['validato'] = $building_validated;
+	$ret['allpublished'] = $allpublished;
+	
 	return $ret;
 }
 
 ##################
-function mk_validation_shared($id_bld, $id_uploadtype, $year){
+static function mk_validation_shared($id_bld, $id_uploadtype, $year){
+	$building_validated = true;
+	$building_published = false;
+	$allpublished = true;
 	self::create_table_tmp_ord($year, $id_uploadtype);
 	$aTord = rs::inMatrix("SELECT * FROM tmp_ord ORDER BY ID ASC");
 
-	$aFunctions = array('npvM2');
+	$aFunctions = array('pv', 'gp', 'npv', 'm2', 'npvM2');
 	$ret['html'] = '';
 
 	$th_intestazione = '
-	<th width="90">Shared</th>
+
 	<th width="200">'.METER.'</th>
-	<th width="90">'.DATE.'</th>
-	<th width="130">'.$aTord[0]['ID_UPLOADTYPE'].'-'.$aTord[0]['ANNO_MS'].'</th>
-	<th width="90">'.$aTord[1]['ID_UPLOADTYPE'].'-'.$aTord[1]['ANNO_MS'].'</th>
-	<th width="90">'.$aTord[2]['ID_UPLOADTYPE'].'-'.$aTord[2]['ANNO_MS'].'</th>
-	<th width="90">NPV/m2</th>
+
+			
+	<th width="90">'.$aTord[2]['ANNO_MS'].'-'.$aTord[2]['ID_UPLOADTYPE'].'</th>
+	<th width="90">'.$aTord[1]['ANNO_MS'].'-'.$aTord[1]['ID_UPLOADTYPE'].'</th>	
+	<th width="130">'.$aTord[0]['ANNO_MS'].'-'.$aTord[0]['ID_UPLOADTYPE'].'</th>
+			
+		<th width="60">PV</th>
+			<th width="60">G/P</th>
+        <th width="60">NPV</th>
+        <th width="60">OCC. m<sup>2</sup></th>
+        <th width="60">NPV/m<sup>2</sup></th>
+        <th width="60">§NPV/m<sup>2</sup></th>
 	<th width="60">Action</th>';
 	
 	$aMF = convalida::get_supplymeters_by_idbuilding($id_bld, " AND ID_SUPPLYTYPE = '2' AND ID_RF = '1'"); # FLATS E METERS
@@ -515,6 +597,12 @@ function mk_validation_shared($id_bld, $id_uploadtype, $year){
 	$new_line = ''; $i = 1;
 	foreach($aMF as $id_flat => $aMeters){
 	
+		
+		
+		//var_dump($a);
+			
+		
+	
 		$misurazioni_appartamento = ''; 
 		$hFields = array('PV','PVM2','NPV','NPVM2','CNPV','CNPVM2','NPVM2F1');
 		$iCalc = '';
@@ -523,6 +611,27 @@ function mk_validation_shared($id_bld, $id_uploadtype, $year){
 		}
 		
 		foreach($aMeters as $id_meter => $rec){
+			
+			
+			$a = convalida::get_last_measures_by_idmeter($rec, $id_uploadtype, $year);
+			
+			if(array_key_exists('id_measure', $a)){
+				$rs_measure = rs::rec2arr("SELECT ID_MEASURE, CNPVM2 FROM msoutputs WHERE ID_MEASURE = '{$a['id_measure']}'");
+				//var_dump($rs_measure);
+				if($rs_measure['ID_MEASURE'] > 0)	{
+					$building_published = true;
+					$published_status = 'published';
+				} else	{
+					$published_status = '';
+					$allpublished = false;
+				}
+			
+			
+			
+			}
+			
+			
+			
 			$aFlats = sole::get_flats_by_idmeter($rec['ID_METER']);
 			$lFlat = ''; $mqFlat = 0;
 			foreach($aFlats as $kk => $flat){
@@ -540,9 +649,11 @@ function mk_validation_shared($id_bld, $id_uploadtype, $year){
 				$rs_measure = rs::rec2arr("SELECT ID_MEASURE, CNPVM2 FROM msoutputs WHERE ID_MEASURE = '{$a['id_measure']}'");
 				
 				if(empty($rs_measure['ID_MEASURE'])){
-					$pubblica = '<a class="shared_publish g-button g-button-yellow" id="sha-'.$rec['ID_METER'].'">'.PUBBLICA.'</a>';
+					$pubblica = '<a class="dn shared_publish g-button g-button-yellow" id="sha-'.$rec['ID_METER'].'">'.PUBBLICA.'</a>';
+					$allpublished = false;
 				} else {
 					$pubblica = '';
+					$building_published = true;
 				}
 				
 				
@@ -557,26 +668,27 @@ function mk_validation_shared($id_bld, $id_uploadtype, $year){
 			
 			$new_line .= '
 			<tr id="'.$rec['ID_METER'].'" type="'.$rec['ID_METERTYPE'].'">
-			<td width="90" class="bright" valign="top">
+			
+			<td valign="top">
 			<form method="post" class="'.$rec['ID_FLAT'].'">
 			'.$idflats.$mqflats.$iCalc.$pubblica.'
 			</form>				
-			</td>
-			<td valign="top">
 			<ul class="simple">
 			<li><strong>'.$rec['CODE_METER'].'</strong></li>
 			<li>Mt: '.$rec['MATRICULA_ID'].'</li>
 			<li>Rn: '.$rec['REGISTERNUM'].'</li>
 			</ul>
-			</td>
-			<td valign="top" class="inputvalues" align="center">'.$a['days'].$a['data'].'</td>
-			<td valign="top" class="inputvalues" align="center">'.$a['mis'].'</td>';
+			</td>';
 			
-			# MISURAZIONE -1
-			$new_line .= '<td class="puls_validate" valign="top" align="center">'.$a['mis-1'].'</td>';	
+			// stampa la terzultima misurazione
+			$new_line .= '<td class="puls_validate" valign="top" align="center">'.$a['data-2'].$a['mis-2'].'</td>';
+			// stampa la penultima misurazione
+			$new_line .= '<td class="puls_validate" valign="top" align="center">'.$a['data-1'].$a['mis-1'].'</td>';
+			$new_line .= '<td valign="top" class="inputvalues" align="center">'.$a['days'].$a['data'].$a['mis'].'</td>';
 		
-			# MISURAZIONE -2
-			$new_line .= '<td class="puls_validate" valign="top" align="center">'.$a['mis-2'].'</td>';	
+			
+			
+		
 		
 			foreach($aFunctions as $k => $val){ # STAMPA I DIV PER I CALCOLI DINAMICI
 				
@@ -585,10 +697,7 @@ function mk_validation_shared($id_bld, $id_uploadtype, $year){
 				
 				$new_line .= '<td width="90" class="npvm2" tipo="sha" id_tipo="'.$rec['ID_METER'].'" valign="top" align="center">
 				<span id="'.$val.'"></span>
-				<div id="turn-'.$rec['ID_METER'].'" class="turncontrols" title="'.$a['id_measure'].'">
-				<img class="restart-meter" src="images/arrow-restart.png" alt="'.$rec['ID_METER'].'" title="Full scale turn around"> 
-				<img class="change-meter" src="images/arrow-change.png" alt="'.$rec['ID_METER'].'" title="Change meter">
-				</div>
+				
 				</td>';
 			}
 			
@@ -605,6 +714,13 @@ function mk_validation_shared($id_bld, $id_uploadtype, $year){
 				$class_puls = 'puls_modify';
 			}
  */			
+	
+			# P.VAL (valore pubblicato)
+			$new_line .= '<td valign="top" align="center"><span class="pval">'.$rs_measure['CNPVM2'].'</span><div id="turn-'.$rec['ID_METER'].'" class="turncontrols" title="'.$a['id_measure'].'">
+				<img class="restart-meter" src="images/arrow-restart.png" alt="'.$rec['ID_METER'].'" title="Full scale turn around"> 
+				<img class="change-meter" src="images/arrow-change.png" alt="'.$rec['ID_METER'].'" title="Change meter">
+				</div></td>';
+			
 			$new_line .= '<td class="'.$class_puls.'" id="main-'.$rec['ID_METER'].'" valign="top" align="right">'.$puls_image.$a['inputs'].'</td>';	
 			$new_line .= '</tr>';	
 
@@ -617,6 +733,9 @@ function mk_validation_shared($id_bld, $id_uploadtype, $year){
 		'.$th_intestazione.$new_line.'
 		</table>';
 	}
+	$ret['pubblicato'] = $building_published;
+	$ret['validato'] = $building_validated;
+	$ret['allpublished'] = $allpublished;
 	return $ret;
 }
 
@@ -644,8 +763,9 @@ function mk_validation_formulas($id_bld, $id_uploadtype, $year){
 	$th_intestazione = '
 	<th width="90">Formula </th>
 	<th width="200">'.METER.'</th>
-	<th width="90">NPVfull</th>
-	<th width="90">NPV/M2</th>';
+	<th width="90">m<sup>2</sup></th>
+	<th width="90">NPV</th>
+	<th width="90">NPV/m<sup>2</sup></th>';
 	
 	$aMF = convalida::get_supplymeters_by_idbuilding($id_bld, " AND ID_RF = '2'"); # FLATS E METERS
 	//$cnt_app = 0;
@@ -669,12 +789,13 @@ function mk_validation_formulas($id_bld, $id_uploadtype, $year){
 			$sql = "REPLACE INTO measures (ID_MEASURE, ID_METER, ID_UPLOADTYPE, ANNO_MS) VALUES ('".$datimisura['ID_MEASURE']."', $id_meter, $id_uploadtype, $year)";
 			mysql_query($sql);
 			$id_measure = mysql_insert_id();
-			$aFlats = sole::get_flats_by_idmeter($id_meter);
+			$aFlats = sole::get_flats_by_idmeter($id_meter, $year, $id_uploadtype);
 			
 			$lFlat = ''; $mqFlat = 0;
 			foreach($aFlats as $kk => $flat){
 				$lFlat .= $flat['ID_FLAT'].',';
-				$mqFlat += $flat['NETAREA'];
+				$occ = $flat['OCCUPANCY']>=20 ? 1:0;
+				$mqFlat += $flat['NETAREA'] * $occ;
 			}
 			
 			$lFlat = stringa::togli_ultimo($lFlat);
@@ -769,6 +890,7 @@ function mk_validation_formulas($id_bld, $id_uploadtype, $year){
 			<li>Formula: '.$rec['FORMULA'].'</li>
 			</ul>
 			</td>
+			<td valign="top" class="inputvalues formula_mq" align="center">'.$mqFlat.'</td>
 			<td valign="top" class="inputvalues" align="center" onclick="alert(\''.$dati['explain'].'\')">'.$output.'</td>
 			<td valign="top" class="inputvalues" align="center">'.$output_m2.'</td>
 			';
@@ -897,7 +1019,7 @@ function delete_msoutputs($id_building, $id_upload, $year, $mensile=false){
 	return $success;
 }
 
-function lunghezza_periodo($id_building, $id_uploadtype){
+static function lunghezza_periodo($id_building, $id_uploadtype){
 	$id_federation = sole::get_federation_by_id_building($id_building);
 	$qPeriodo = "SELECT ND_SUMMER, ND_WINTER FROM federations WHERE ID_FEDERATION='$id_federation' LIMIT 1";
 	$rPeriodo = rs::rec2arr($qPeriodo);

@@ -1,12 +1,9 @@
 <?php
-# V.0.1.8
 include_once 'init.php';
 list($il, $jsstatis) = request::get(array('il' => NULL,'jsstatis' => NULL));
 
 $user = new autentica($aA5);
 $user -> login_standard();
-
-$scheda -> img = false;
 
 $MYFILE -> add_js('
 <script type="text/javascript">
@@ -79,7 +76,7 @@ $input['graphtype'] -> type = 'select';
 $input['graphtype'] -> addblank = true; 
 $input['graphtype'] -> aval = rs::id2arr("SELECT ID, ".$graph_name." FROM graphtypes WHERE attivo = 1 ORDER BY ".$graph_name." ASC"); 
 
-if($user -> idg == 5){ // hhu non può visualizzare alcuni tipi di grafici
+if($user->idg == 5){ // hhu non puï¿½ visualizzare alcuni tipi di grafici
 	unset($input['graphtype'] -> aval[7]);  // Periodo e tipo di fornitura
 	unset($input['graphtype'] -> aval[11]); // Report PDF
 }

@@ -22,14 +22,14 @@ $id_hcompany = array_key_exists('hcompanys', $_GET) ? $_GET['hcompanys'] : '';
 $id_building = array_key_exists('blbld', $_GET) ? $_GET['blbld'] : '';
 
 
-if($user -> idg == 2 ){ // FM vede solo gli appartamenti della federazione
+if($user->idg == 2 ){ // GM vede solo gli appartamenti della federazione
 	$right_join = "
 Right Join hcompanys on buildings.ID_HCOMPANY = hcompanys.ID_HCOMPANY 
 ";
 	$extra_where = "hcompanys.ID_FEDERATION = '".$user -> aUser['ID_FEDERATION']."'";
 }
 
-elseif($user -> idg == 3){ // MHCU vedono solo gli appartamenti della propria cooperativa
+elseif($user->idg == 3){ // MHMU vedono solo gli appartamenti della propria cooperativa
 	$right_join = "
 Right Join hcompanys on buildings.ID_HCOMPANY = hcompanys.ID_HCOMPANY 
 ";
@@ -122,7 +122,7 @@ foreach($rs as $rec){
 	}	
 	
 	$lista.='<tr'.$color.' valign="top">'.$celle.'
-	<td class="contrast" align="right">'.$href_mod.$ck_row.'
+	<td class="contrast" align="right" colspan="2">'.$href_mod.$ck_row.'
    </td></tr>';
 	
 $cnt++;
@@ -144,31 +144,33 @@ if($user -> idg < 3){
 	$sel_tutti = '<span class="a_sel_tutti">'.S_SELALL.' <input type="checkbox" class="checkbox" onchange="javascript:check_all_by_name(\'list\', \'ck\')" name="ck" value="1" /></span>';
 }
 
-$html['select_building'] = sole::select_fhb('');
 
 include_once HEAD_AR;
 ?>
 <form method="get" name="list" action="<?=$action?>">
 <?=request::hidden($backUriHidden)?>
-<div id="col_left" class="duecentocinquanta">
-<p><?=CH_BUILDING?>:</p>
-<?=$html['select_building']?>
-</div>
-<div id="col_right">
+
+
 <table class="list">
 <tr class="bg">  
-<th colspan="<?=$my_vars->colonne?>">
+<th colspan="<?=$my_vars->colonne+1?>">
 <?=$href_new?>
 </th>
 <th align="right"><?=$input_delete?></th>
 </tr>
-<tr class="sort"><?=$my_vars->th?><th align="right"><?=$sel_tutti?></th></tr>
+<tr class="sort"><?=$my_vars->th?>
+	<th rowspan="2">
+		<div id="select_building">
+		<?=sole::select_fhb('')?>
+		</div>
+	</th>
+	<th align="right"><?=$sel_tutti?></th></tr>
 <tr class="search"><?=$my_vars->ricerca?><th align="right"><input id="button" <?=$my_vars->sortbutton;?> class="g-button" type="submit" value="<?=FIND?>" name="button"/></th></tr>
 <?=$lista?>
-<tr><th colspan="<?=$my_vars->colonne+1?>"><?=$cursor -> player?></th></tr>
-<tr><th colspan="<?=$my_vars->colonne+1?>"><?=$cursor -> t_recs?> record | <?=$cursor -> t_curs?> pagine</th></tr>
+<tr><th colspan="<?=$my_vars->colonne+2?>"><?=$cursor->player?></th></tr>
+<tr><th colspan="<?=$my_vars->colonne+2?>"><?=$cursor->t_recs?> record | <?=$cursor->t_curs?> pagine</th></tr>
 </table>
-</div>
+
 <div class="clear"></div>
 <input type="hidden" id="id_federation" value="<?=$id_federation?>"/>
 <input type="hidden" id="id_hcompany" value="<?=$id_hcompany?>"/>

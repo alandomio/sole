@@ -134,7 +134,9 @@ $fillcolor = array(	array(255, 204, 51),
 	
 	
 	foreach ($metertypes as $metertype)	{
-		$usages = sole::get_usages_by_idbuilding($b1, $metertype['ID_METERTYPE'] );
+		
+		//$usages = sole::get_usages_by_idbuilding($b1, $metertype['ID_METERTYPE'] );
+		$usages = sole::get_usage_list_by_idbuilding($b1, $metertype['ID_METERTYPE'], 't' );
 		$fillcolor = sfumature($metertype['ID_METERTYPE'], count($usages));
 		$energytype = sole::get_metertype_description($metertype['ID_METERTYPE']);
 		
@@ -146,7 +148,8 @@ $fillcolor = array(	array(255, 204, 51),
 					$consumo1 = $consumo2 = 0;
 					foreach($flats as $flat)	{
 						$flat1 = new flat($flat['ID_FLAT']);
-						$dati = $flat1->get_npv_primary($usage['ID_USAGE'], $year, 1);
+						//$dati = $flat1->get_npv_primary($usage['ID_USAGE'], $year, 1);
+						$dati = $flat1->get_value('a', 'p', $usage['ID_USAGE'], $year, 1);
 						//var_dump($dati);
 						if( $dati['status']=='nd' )
 							$consumo1 += 0;
@@ -156,7 +159,7 @@ $fillcolor = array(	array(255, 204, 51),
 						if( $dati['status']=='wrong' )
 							$bande[] = banda_wrong($colonna);
 						*/
-						$dati = $flat1->get_npv_primary($usage['ID_USAGE'], $year, 2);
+						$dati = $flat1->get_value('a', 'p', $usage['ID_USAGE'], $year, 2);
 						if( $dati['status']=='nd' )
 							$consumo2 += 0;
 						else

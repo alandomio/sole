@@ -1,13 +1,12 @@
 <?php
-# V.0.1.8
 class url{
-function urlunix($url){
+static function urlunix($url){
 	$url=str_replace("//","/",$url);
 	$url=str_replace("///","/",$url);
 	return $url;
 }
 
-function uri($url,$var){
+static function uri($url,$var){
 	$uri=$url."?";
 	foreach($var as $k=>$v){
 		$uri.=$k."=".rawurlencode($v)."&";
@@ -15,22 +14,34 @@ function uri($url,$var){
 	return $uri=substr($uri,0,strlen($uri)-1);
 }
 
-function get($url, $var){
-	$uri=$url."?";
-	foreach($var as $k=>$v)
-		$uri.=$k."=".rawurlencode($v)."&amp;";
+static function get($url, $var, $sep='&amp;'){
+
+	$slash = count($var)>0 ? '/' : '';
+
+	if( substr($url, -1) == '/'){
+		$slash='';
+	}
 		
+	if(strpos($url, '.php') !== false){
+		$uri=$url.'?';
+	} else {
+		$uri=$url.$slash.'?';
+	}
+
+	foreach($var as $k=>$v){
+		$uri .= $k."=".rawurlencode((string)$v).$sep;
+	}
 	if($uri[strlen($uri)-1]==';') $uri = substr($uri,0,strlen($uri)-5);
 	else $uri=substr($uri,0,strlen($uri)-1);
 	
 	return $uri;
 }
 	
-function strip($uri){
+static function strip($uri){
 	return (strpos($uri,"?")!==false ? stringa::rightfrom($uri,"?") : $uri);
 }
 
-function getRealIpAddr(){
+static function getRealIpAddr(){
 	if(!empty($_SERVER['HTTP_CLIENT_IP'])){ // CHECK IP FROM SHARE INTERNET
 		$ip = $_SERVER['HTTP_CLIENT_IP'];
 	}

@@ -1,5 +1,4 @@
 <?php
-# V.0.1.8
 include_once 'init.php';
 $user = new autentica($aA4);
 $user -> login_standard();
@@ -34,7 +33,7 @@ $lable=rs::sql2lbl($qTotRec);
 $sublable = arr::arr2constant($aShowCrud, true);
 $rec=rs::rec2arr($qrs=$qTotRec." ".$fil);
 
-if($user -> idg == 2){ # LISTA HOUSING COMPANIES RELATIVE ALLA FEDERAZIONE DI APPARTENEZA DELL'FM LOGGATO
+if($user->idg == 2){ # LISTA HOUSING COMPANIES RELATIVE ALLA FEDERAZIONE DI APPARTENEZA DELL'GM LOGGATO
 $qHC = "SELECT
 hcompanys.ID_HCOMPANY,
 hcompanys.CODE_HC,
@@ -100,6 +99,20 @@ if(array_key_exists("subDo",$_POST) || array_key_exists("subBack",$_POST)){
 	
 	$MYFILE -> add_msg($ERR_CRUD, 'err');
 	
+	/*
+	 * verifica se monitortype è stato modificato
+	 * */
+	$changed_monitortype=false;
+	if( ! empty($id)){
+		$q="SELECT MONITORTYPE FROM buildings WHERE ID_BUILDING={$id}";
+		$row=rs::rec2arr($q);
+		if( ! empty($_POST['MONITORTYPE']) && ! empty($row['MONITORTYPE'])){
+			if($_POST['MONITORTYPE'] != $row['MONITORTYPE']){
+				$changed_monitortype=true;
+			}
+		}
+	}
+	
 	if(err::allfalse($ERR_CRUD)){
 		$err=rs::execdml($crud_op,$tabella,$rec,$aPrime);
 		$ERR_CRUD['SYSTEMERR'] = err::sqlcrud(SYSTEMERR);
@@ -110,6 +123,15 @@ if(array_key_exists("subDo",$_POST) || array_key_exists("subBack",$_POST)){
 		$backUri[$msg_krud]="1";
 		
 		if(err::allfalse($ERR_CRUD)){
+			
+			/*
+			 * operazioni da eseguire in caso di modifica di monitortype,
+			 * per esempio l'eliminazione delle precedenti misurazioni
+			 * */
+			if($changed_monitortype){
+				// echo 'Eliminazione misurazioni';
+			}
+			
 			$id = $crud == 'ins' ? mysql_insert_id() : $id;
 			if(empty($id)) { $id = $crud == 'ins' ? $rec[$db->primkey->name] : $id; }
 		
@@ -130,8 +152,7 @@ if(array_key_exists("subDo",$_POST) || array_key_exists("subBack",$_POST)){
 					mysql_query($qCode);
 				}
 				io::headto($MYFILE -> file, array_merge($backUri, array('crud' => 'upd', 'id' => $id, 'ack' => 'Nuovo record inserito')));
-			}
-			else{
+			} else {
 				io::headto($MYFILE -> file, array_merge($backUri, array('crud' => 'upd', 'id' => $id, 'ack' => 'Aggiornamento riuscito')));
 			}
 		}
@@ -179,23 +200,35 @@ $send_vars = $_GET;
 $send_vars = arr::_unset($send_vars, array('err','ack'));
 $action = url::get(FILENAME.'.php', $send_vars);
 
-if($user -> idg == 4){
+/*
+ * personalizzazione select MONITORTYPE
+ * */
+$db->MONITORTYPE->type =	'select';
+$db->MONITORTYPE->aval =	array(6=>SEMESTRALE, 12=>ANNUALE);
+
+/*
+ * policies di gruppo
+ * */
+if($user->idg > 2){
+	$db->MONITORTYPE->type = 'slable';
+}
+elseif($user->idg == 4){
 	$db -> ID_HCOMPANY -> type = 'slable';
 	$db -> NAME_BLD -> type = 'lable';
 	$db -> YEAR_BLD -> type = 'lable';
-	$db -> DESCRIP_BLD -> type = 'lable';
 	
+	$db->DESCRIP_BLD_IT->type = 'lable';
+	$db->MONITORINFO_IT->type = 'lable';
+	$db->DESCRIP_BLD_EN->type = 'lable';
+	$db->MONITORINFO_EN->type = 'lable';
+} else {
+	$db->DESCRIP_BLD_IT->css = 'text_big editor';
+	$db->MONITORINFO_IT->css = 'text_big editor';
+	$db->DESCRIP_BLD_EN->css = 'text_big editor';
+	$db->MONITORINFO_EN->css = 'text_big editor';
 }
-
-/*$db -> ID_FEDERATION -> addblank = true;
-$db -> ID_FEDERATION -> txtblank = S_CHOOSE;
-$db -> ID_USER -> addblank = true;
-$db -> ID_USER -> txtblank = S_CHOOSE;*/
-
-# ESEMPI:
-# $db -> NAME_FIELD -> addblank = true;
-# $db -> NAME_FIELD -> txtblank = '- Scegli';
 $db -> IS_HIDE -> lable = '';
+$db->IS_POWERHOUSE->lable = '';
 
 include_once HEAD_AR;
 print $sub_menu;
@@ -215,7 +248,9 @@ if($user -> idg == 4){
   <?=request::hidden($backUri)?>
     <table class="list">    
       <tr class="bg">      
-         <th colspan="6"><?=$href_lista?> <?=$href_new?> <?=$input_save?></th>
+         <th colspan="6"><?=$href_lista?> <?=$href_new?> <?=$input_save?> 
+         <input type="button" value="<?=__('Duplica edificio')?>" id="clone-building" rel="<?=$id?>" class="g-button" />
+         </th>
       </tr>    
 	<? if($crud=='upd'){
 		print'<tr class="yellow"><td colspan="6"><div class="table_cell"><strong>'.$etichetta.'</strong></div></td></tr>';
@@ -248,11 +283,14 @@ if($scheda -> img){ # STAMPO CONTROLLI IMMAGINE
 }
       	?>      
     <tr>                   
-    <th colspan="6">* campi obbligatori
+    <th colspan="6">* <?=__('Campi obbligatori')?>
     </th>    
     </tr>  
     </table>
   </form>
 <?php
+
+$MYFILE->add_js_group('buildings_c',array('js/buildings_c.js'), 'debug', 100, 'footer');
+
 include_once FOOTER_AR;
 ?>

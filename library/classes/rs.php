@@ -1,7 +1,6 @@
 <?php
-# V.0.1.8
 class rs{
-function rpt_ctrl($rec,$sql_type,$lable,$comment,$not_null,$oldrec){
+static function rpt_ctrl($rec,$sql_type,$lable,$comment,$not_null,$oldrec){
 	$err=false;
 	$data=trim($rec);
 	if(strpos($comment,"password")!==false){
@@ -10,7 +9,7 @@ function rpt_ctrl($rec,$sql_type,$lable,$comment,$not_null,$oldrec){
 	return $err;
 }
 
-public function get_fields($table){
+public static function get_fields($table){
 	$aFlds = array();
 	$rFlds = rs::inMatrix("SHOW FULL COLUMNS FROM ".$table);
 	foreach($rFlds as $k => $v){ # ARRAY PER VERIFICA TESTO SELECT OPTION
@@ -19,7 +18,7 @@ public function get_fields($table){
 	return $aFlds;
 }
 
-function uni_ctrl($io){
+static function uni_ctrl($io){
 	$rec=$io->val;
 	$sql_type=$io->sql_type;
 	$lable=$io->lable;
@@ -37,7 +36,7 @@ function uni_ctrl($io){
 	return $err;
 }	
 			
-function syntax_ctrl($io){
+static function syntax_ctrl($io){
 	$rec = $io -> val;
 	$sql_type = $io -> sql_type;
 	$lable = $io -> lable;
@@ -76,7 +75,7 @@ function syntax_ctrl($io){
 	return $err;
 }
 
-function max_ctrl($io){
+static function max_ctrl($io){
 	$rec=$io->val;
 	$sql_type=$io->sql_type;
 	$lable=$io->lable;
@@ -102,7 +101,7 @@ function max_ctrl($io){
 	return $err;
 }
 		
-function null_ctrl($io){
+static function null_ctrl($io){
 	$rec=$io->val;
 	$sql_type=$io->sql_type;
 	$lable=$io->lable;
@@ -117,7 +116,7 @@ function null_ctrl($io){
 	return $err;
 }
 		
-function get_comment($comment){ # COMMENTO: min(3) max(60) not_empty
+static function get_comment($comment){ # COMMENTO: min(3) max(60) not_empty
 	$aRet = array();
 	$aRet['msg'] = false;
 	$aRet['not_empty'] = false;
@@ -141,7 +140,7 @@ function get_comment($comment){ # COMMENTO: min(3) max(60) not_empty
 	return $aRet;
 }
 
-function min_ctrl($io){
+static function min_ctrl($io){
 	$rec=$io->val;
 	$sql_type=$io->sql_type;
 	$lable=$io->lable;
@@ -174,19 +173,19 @@ function min_ctrl($io){
 	return $err;
 }
 
-function err(){
+static function err(){
 	$err=trim(mysql_error()." ".mysql_errno());
 	$err =$err=="" ? false : $err;
 	return $err ;
 }
 		
-function set0(){return @mysql_query("SET AUTOCOMMIT=0") ? false : mysql_errno()." ".mysql_error();}
-function set1(){return @mysql_query("SET AUTOCOMMIT=1") ? false : mysql_errno()." ".mysql_error();}
-function start(){return @mysql_query("START TRANSACTION") ? false : mysql_errno()." ".mysql_error();}
-function roll(){return @mysql_query("ROLLBACK") ? false : mysql_errno()." ".mysql_error();}
-function comm(){return @mysql_query("COMMIT") ? false : mysql_errno()." ".mysql_error();}
+static function set0(){return @mysql_query("SET AUTOCOMMIT=0") ? false : mysql_errno()." ".mysql_error();}
+static function set1(){return @mysql_query("SET AUTOCOMMIT=1") ? false : mysql_errno()." ".mysql_error();}
+static function start(){return @mysql_query("START TRANSACTION") ? false : mysql_errno()." ".mysql_error();}
+static function roll(){return @mysql_query("ROLLBACK") ? false : mysql_errno()." ".mysql_error();}
+static function comm(){return @mysql_query("COMMIT") ? false : mysql_errno()." ".mysql_error();}
 
-function lable($atable){
+static function lable($atable){
 	$atable = !is_array($atable) ? array($atable) : $atable;
 	$name=array();
 	foreach($atable as $table){
@@ -203,7 +202,7 @@ function lable($atable){
 	return $name;
 }	
 		
-function lastid($tabella){
+static function lastid($tabella){
 	$lastid=NULL;
 	if($rs=@mysql_query($q="SELECT COUNT(*) AS lastid FROM  $tabella")){
 		$row=mysql_fetch_assoc($rs);
@@ -216,7 +215,7 @@ function lastid($tabella){
 	return $lastid;
 }
 	
-function cursor($qTotRec,$offset){
+static function cursor($qTotRec,$offset){
 	$rs=mysql_query($qTotRec);
 	if($rs == true){
 		$totrecord=mysql_num_rows($rs);
@@ -244,7 +243,7 @@ function cursor($qTotRec,$offset){
 }
 		
 # return resourse connessione
-function conn(){
+static function conn(){
 	$conx=NULL;
 	if(@mysql_connect(DBHOST,DBUSER,DBPSW)) ;
 	else die("Errore di connessione database");
@@ -253,14 +252,14 @@ function conn(){
 	return $conx;
 }
 	
-public function dmlfield($rec){
+public static function dmlfield($rec){
 	$str="(";
 	$key=array_keys($rec);
 	$str.=implode(",",$key);
 	return $str.=")";
 }
 		
-public function dmlval($rec){
+public static function dmlval($rec){
 	$str="(";
 	foreach($rec as $key => $val){
 		if(substr($key,0,2) == 'D_'){ $val = dtime::my2db($val); }
@@ -272,7 +271,7 @@ public function dmlval($rec){
 	return $str.=")";	
 }	
 		
-public function dmlsetfield($rec){
+public static function dmlsetfield($rec){
 	$str="";
 	foreach($rec as $key => $val){
 		if(substr($key,0,2) == 'D_'){ $val = dtime::my2db($val); }
@@ -286,7 +285,7 @@ public function dmlsetfield($rec){
 	return $str;
 }
 
-function and_fld($fld=array()){ 
+static function and_fld($fld=array()){ 
 	$str="";
 	foreach($fld as $k=>$v){
 		$str.=" ".$k."='".$v."' AND";
@@ -294,7 +293,7 @@ function and_fld($fld=array()){
 	return substr($str,0,strlen($str)-3)." ";
 }
 	
-function where_or($tab,$field,$arr){
+static function where_or($tab,$field,$arr){
 	$str="";
 	foreach($arr as $k=>$v){
 		if(is_null($v) || (is_bool($v) && $v==false) || (is_string($v) && $v=="")){ $str.=" ".$tab.".".$field." IS "."NULL"." OR"; }
@@ -303,7 +302,7 @@ function where_or($tab,$field,$arr){
 	return $str != "" ? " (".stringa::rcut($str,2).")" : "";
 }
 	
-function where_and($tab,$fld=array()){ 
+static function where_and($tab,$fld=array()){ 
 	$str="";
 	foreach($fld as $k=>$v){
 		if(is_null($v) || (is_bool($v) && $val==v) || (is_string($v) && $v=="")){ $str.=" ".$tab.".".$k." IS "."NULL"." AND"; }
@@ -312,14 +311,14 @@ function where_and($tab,$fld=array()){
 	return $str!="" ? " ".stringa::rcut($str,3) : "";
 }
 		
-function or_and($or,$and){
+static function or_and($or,$and){
 	$str="";
 	$or.=$or!="" && $and!="" ? " AND " : "";
 	$str=$or.$and;
 	return $str=$str!="" ? " WHERE ".$str : $str;
 }
 	
-function where_fld($fld=array()){ 
+static function where_fld($fld=array()){
 	$str="";
 	foreach($fld as $k=>$v){
 		$str.=" ".$k."='".$v."' AND";
@@ -327,7 +326,7 @@ function where_fld($fld=array()){
 	return $str!="" ? "WHERE ".substr($str,0,strlen($str)-3) : "";
 }	
 			
-function execdml($dml="INSERT oppure UPDATE DELETE",$table,$rec=array("COGNOME"=>'Fo'),$aPrime=array('ID_TABELLA'=>3)){
+static function execdml($dml="INSERT oppure UPDATE DELETE",$table,$rec=array("COGNOME"=>'Fo'),$aPrime=array('ID_TABELLA'=>3)){
 	$err=false;
 	reset($aPrime);
 	$and_fld=rs::and_fld($aPrime);
@@ -355,7 +354,7 @@ function execdml($dml="INSERT oppure UPDATE DELETE",$table,$rec=array("COGNOME"=
 	return $err;
 }	
 		
-function crud($dml="INSERT oppure UPDATE DELETE",$table,$rec=array("COGNOME"=>'Fo'),$aPrime=array('ID_TABELLA'=>3)){
+static function crud($dml="INSERT oppure UPDATE DELETE",$table,$rec=array("COGNOME"=>'Fo'),$aPrime=array('ID_TABELLA'=>3)){
 	$not_err=false;
 	reset($aPrime);
 	$and_fld=rs::and_fld($aPrime);
@@ -381,7 +380,7 @@ function crud($dml="INSERT oppure UPDATE DELETE",$table,$rec=array("COGNOME"=>'F
 	print $not_err;
 }		
 
-function &inMenu($keyArray="ID_utente", $elementArray=array("NOME","&nbsp;(","SOPRANOME",")"), $addBlank=true, $sql="SELECT * oppure SELECT ID_CAMPO,NOME"){
+static function &inMenu($keyArray="ID_utente", $elementArray=array("NOME","&nbsp;(","SOPRANOME",")"), $addBlank=true, $sql="SELECT * oppure SELECT ID_CAMPO,NOME"){
 	$rs2arr=array();
 	if(is_array($addBlank) && !empty($addBlank)){
 		reset($addBlank);
@@ -410,7 +409,7 @@ function &inMenu($keyArray="ID_utente", $elementArray=array("NOME","&nbsp;(","SO
 	return $rs2arr;
 }	
 			
-function &inMatrix($sql="SELECT * oppure SELECT ID_CAMPO,NOME...."){
+static function &inMatrix($sql="SELECT * oppure SELECT ID_CAMPO,NOME...."){
 	$rs2arr=array();
 	if($rs=@mysql_query($sql)){
 		$i=0;
@@ -429,7 +428,7 @@ function &inMatrix($sql="SELECT * oppure SELECT ID_CAMPO,NOME...."){
 	return $rs2arr;
 }
 
-function &inKey($sql, $key, $val, $keyup){ # RESTITUISCE UN ARRAY CHIAVE => VALORE
+static function &inKey($sql, $key, $val, $keyup=false){ # RESTITUISCE UN ARRAY CHIAVE => VALORE
 	$rs2arr=array();
 	if($rs = @mysql_query($sql)){
 		while($row = mysql_fetch_assoc($rs)){
@@ -443,7 +442,7 @@ function &inKey($sql, $key, $val, $keyup){ # RESTITUISCE UN ARRAY CHIAVE => VALO
 	return $rs2arr;
 }
 		
-function &arr($sql="SELECT * oppure SELECT ID_CAMPO,NOME...."){
+static function &arr($sql="SELECT * oppure SELECT ID_CAMPO,NOME...."){
 	$rs2arr=array();
 	if($rs=@mysql_query($sql)){
 		if(mysql_num_fields($rs)==1){
@@ -462,7 +461,7 @@ function &arr($sql="SELECT * oppure SELECT ID_CAMPO,NOME...."){
 	return $rs2arr;
 }
 		
-function &inMatrix2($sql="SELECT * oppure SELECT ID_CAMPO,NOME...."){
+static function &inMatrix2($sql="SELECT * oppure SELECT ID_CAMPO,NOME...."){
 	$rs2arr=array();
 	if($rs=@mysql_query($sql)){
 		$i=0;
@@ -484,7 +483,7 @@ function &inMatrix2($sql="SELECT * oppure SELECT ID_CAMPO,NOME...."){
 }
 		
 		
-function &sql2lbl($sql="SELECT * oppure SELECT ID_CAMPO,NOME.... WHERE 1=0 oppure WHERE ID_CAMPO='15' oppure WHERE ID_CAMPO='ABC'"){
+static function &sql2lbl($sql="SELECT * oppure SELECT ID_CAMPO,NOME.... WHERE 1=0 oppure WHERE ID_CAMPO='15' oppure WHERE ID_CAMPO='ABC'"){
 	$lable=array();
 	$not_costant=array();
 	$field=rs::name_fields($sql);	
@@ -499,7 +498,7 @@ function &sql2lbl($sql="SELECT * oppure SELECT ID_CAMPO,NOME.... WHERE 1=0 oppur
 	return $lable;
 }		
 
-function &objarr($sql="SELECT * oppure SELECT ID_CAMPO,NOME...."){
+static function &objarr($sql="SELECT * oppure SELECT ID_CAMPO,NOME...."){
 	err::sql($sql);
 	$rs2arr=array();
 	if($rs=@mysql_query($sql)){
@@ -520,7 +519,7 @@ function &objarr($sql="SELECT * oppure SELECT ID_CAMPO,NOME...."){
 	return $rs2arr;
 }	
 		
-function &rec2arr($sql="SELECT * oppure SELECT ID_CAMPO,NOME.... WHERE 1=0 oppure WHERE ID_CAMPO='15' oppure WHERE ID_CAMPO='ABC'"){
+static function &rec2arr($sql="SELECT * oppure SELECT ID_CAMPO,NOME.... WHERE 1=0 oppure WHERE ID_CAMPO='15' oppure WHERE ID_CAMPO='ABC'"){
 	$rs2arr=array();
 	if($rs=@mysql_query($sql)){
 		if(@mysql_num_rows($rs)<=1){
@@ -540,7 +539,7 @@ function &rec2arr($sql="SELECT * oppure SELECT ID_CAMPO,NOME.... WHERE 1=0 oppur
 	return $rs2arr;
 }
 		
-function &rec2obj($sql="SELECT * oppure SELECT ID_CAMPO,NOME.... WHERE 1=0 oppure WHERE ID_CAMPO='15' oppure WHERE ID_CAMPO='ABC'"){
+static function &rec2obj($sql="SELECT * oppure SELECT ID_CAMPO,NOME.... WHERE 1=0 oppure WHERE ID_CAMPO='15' oppure WHERE ID_CAMPO='ABC'"){
 	$row=false;
 	if($rs=@mysql_query($sql)){
 		if(@mysql_num_rows($rs)<=1){
@@ -561,7 +560,7 @@ function &rec2obj($sql="SELECT * oppure SELECT ID_CAMPO,NOME.... WHERE 1=0 oppur
 	return $row;
 }
 		
-function &fld2var($sql="SELECT * oppure SELECT ID_CAMPO,NOME.... WHERE 1=0 oppure WHERE ID_CAMPO='15' oppure WHERE ID_CAMPO='ABC'"){
+static function &fld2var($sql="SELECT * oppure SELECT ID_CAMPO,NOME.... WHERE 1=0 oppure WHERE ID_CAMPO='15' oppure WHERE ID_CAMPO='ABC'"){
 	$fld2var=NULL;
 	if($rs=@mysql_query($sql)){
 		if(@mysql_num_rows($rs)<=1){
@@ -584,7 +583,7 @@ function &fld2var($sql="SELECT * oppure SELECT ID_CAMPO,NOME.... WHERE 1=0 oppur
 	return $fld2var;
 }
 		
-function &fld2arr($sql="SELECT * oppure SELECT ID_CAMPO,NOME.... WHERE 1=0 oppure WHERE ID_CAMPO='15' oppure WHERE ID_CAMPO='ABC'"){
+static function &fld2arr($sql="SELECT * oppure SELECT ID_CAMPO,NOME.... WHERE 1=0 oppure WHERE ID_CAMPO='15' oppure WHERE ID_CAMPO='ABC'"){
 	$fld2var=array();
 	if($rs=@mysql_query($sql)){
 		if(mysql_num_fields($rs)==1){
@@ -604,7 +603,7 @@ function &fld2arr($sql="SELECT * oppure SELECT ID_CAMPO,NOME.... WHERE 1=0 oppur
 	return $fld2var;
 }
 		
-function &id2arr($sql="SELECT * oppure SELECT ID_CAMPO,NOME.... WHERE 1=0 oppure WHERE ID_CAMPO='15' oppure WHERE ID_CAMPO='ABC'"){
+static function &id2arr($sql="SELECT * oppure SELECT ID_CAMPO,NOME.... WHERE 1=0 oppure WHERE ID_CAMPO='15' oppure WHERE ID_CAMPO='ABC'"){
 	$fld2var = array();
 	if($rs=@mysql_query($sql)){
 		$nField=mysql_num_fields($rs);
@@ -623,7 +622,7 @@ function &id2arr($sql="SELECT * oppure SELECT ID_CAMPO,NOME.... WHERE 1=0 oppure
 	return $fld2var;
 }
 		
-function &sql2label($sql="SELECT * oppure SELECT ID_CAMPO,NOME.... WHERE 1=0 oppure WHERE ID_CAMPO='15' oppure WHERE ID_CAMPO='ABC'"){
+static function &sql2label($sql="SELECT * oppure SELECT ID_CAMPO,NOME.... WHERE 1=0 oppure WHERE ID_CAMPO='15' oppure WHERE ID_CAMPO='ABC'"){
 	$lable=array();
 	$not_costant=array();
 	$field=rs::name_fields($sql);	
@@ -641,7 +640,7 @@ function &sql2label($sql="SELECT * oppure SELECT ID_CAMPO,NOME.... WHERE 1=0 opp
 	return $lable;
 }
 	
-function label_frmt($lable){
+static function label_frmt($lable){
 	$not_costant=array();
 	foreach($lable as $k=>$v){
 		if(strpos($k,"ID_")!==false){
@@ -660,7 +659,7 @@ function label_frmt($lable){
 }
 	
 	# return array["nome campo"]=type "varchar" oppure "int" ....
-function name_fields($sql){
+static function name_fields($sql){
 	$rs2arr=array();
 	if($rs=@mysql_query($sql)){
 		$campi = mysql_num_fields($rs);
@@ -674,7 +673,7 @@ function name_fields($sql){
 	return $rs2arr;	
 }
 		
-function &type($table=""){
+static function &type($table=""){
 	$rs2arr=array();
 	if($rs=@mysql_query("SHOW FULL COLUMNS FROM $table")){
 		while($row=mysql_fetch_assoc($rs)){
@@ -688,7 +687,7 @@ function &type($table=""){
 	return $rs2arr;
 }
 		
-function &field($table=""){
+static function &field($table=""){
 	$rs2arr=array();
 	if($rs=@mysql_query("SHOW FULL COLUMNS FROM $table")){
 		while($row=mysql_fetch_assoc($rs)){
@@ -702,7 +701,7 @@ function &field($table=""){
 	return $rs2arr;
 }
 		
-function mytype($arr){
+static function mytype($arr){
 	foreach($arr as $k=>$v){
 		$type="text";
 		$type=strpos($v,"text")!==false ? "textarea" : $type;
@@ -712,7 +711,7 @@ function mytype($arr){
 	return $arr;
 }
 
-function showfull3($atabelle,$rec,$lable,$add,$skipExt){
+static function showfull3($atabelle,$rec,$lable,$add,$skipExt){
 	$name=array();
 	$type=array();
 	$lenght=array();
@@ -844,7 +843,7 @@ function showfull3($atabelle,$rec,$lable,$add,$skipExt){
 	return array($name,$rec,$type,$lenght,$default,$not_null,$lable,$dec,$key,$aval,$addblank,$comment,$sql_type);	
 }
 
-function light($atabelle,$rec,$lable){ # NUOVO METODO CHE USA I VALORI DELL'OGGETTO ordinamento
+static function light($atabelle,$rec,$lable){ // NUOVO METODO CHE USA I VALORI DELL'OGGETTO ordinamento
 	$is_dpt = false;
 	$dpt_select = array();
 	$dpt_select['aFval'] = array();
@@ -925,7 +924,7 @@ function light($atabelle,$rec,$lable){ # NUOVO METODO CHE USA I VALORI DELL'OGGE
 
 
 
-function showfulljs($atabelle,$rec,$lable,$add,$skipExt, $ordinamento){ # NUOVO METODO CHE USA I VALORI DELL'OGGETTO ordinamento
+static function showfulljs($atabelle,$rec,$lable,$add,$skipExt, $ordinamento){ # NUOVO METODO CHE USA I VALORI DELL'OGGETTO ordinamento
 	$name=array();
 	$type=array();
 	$disabled=array();
@@ -1073,7 +1072,7 @@ function showfulljs($atabelle,$rec,$lable,$add,$skipExt, $ordinamento){ # NUOVO 
 }
 
 
-function showfull($atabelle,$rec,$lable,$add, $skipExt, $ordinamento){
+static function showfull($atabelle,$rec,$lable,$add, $skipExt, $ordinamento){
 	$is_dpt = false;
 	$dpt_select = array();
 	$dpt_select['aFval'] = array();
@@ -1241,7 +1240,7 @@ function showfull($atabelle,$rec,$lable,$add, $skipExt, $ordinamento){
 	return array($name, $rec, $type, $lenght, $default, $not_null, $lable, $dec, $key, $aval, $addblank, $comment, $sql_type, $js, $disabled, $aFval);	
 }
 
-function showfullpersonal($atabelle,$rec,$lable,$add, $skipExt, $aPersonalSelect, $ordinamento){ # NUOVO METODO CHE USA I VALORI DELL'OGGETTO ordinamento
+static function showfullpersonal($atabelle,$rec,$lable,$add, $skipExt, $aPersonalSelect, $ordinamento){ # NUOVO METODO CHE USA I VALORI DELL'OGGETTO ordinamento
 	$is_dpt = false;
 	$dpt_select = array();
 	$dpt_select['aFval'] = array();
@@ -1262,6 +1261,8 @@ function showfullpersonal($atabelle,$rec,$lable,$add, $skipExt, $aPersonalSelect
 	
 	foreach($atabelle as $tabella){
 		$$tabella = rs::inMatrix( $q="SHOW FULL COLUMNS FROM $tabella");
+		
+		// print_r($$tabella);
 		foreach($$tabella as $k => $v){ # ARRAY PER VERIFICA TESTO SELECT OPTION
 			$field_list[] = $v['Field'];
 		}
@@ -1414,7 +1415,7 @@ function showfullpersonal($atabelle,$rec,$lable,$add, $skipExt, $aPersonalSelect
 	return array($name, $rec, $type, $lenght, $default, $not_null, $lable, $dec, $key, $aval, $addblank, $comment, $sql_type, $js, $disabled, $aFval);	
 }	
 
-public function select_js($table = 'descriptors', $ordinamento, $field_list){ # RESTITUISCE UN ARRAY DI CAMPI PER INTERFACCIARSI COL METODO rs::showfull
+public static function select_js($table = 'descriptors', $ordinamento, $field_list){ # RESTITUISCE UN ARRAY DI CAMPI PER INTERFACCIARSI COL METODO rs::showfull
 	$aRet = array(); # $aRet['K0_ID_STATI']['aval'] = '5'
 	$aFval = array();
 	
@@ -1458,7 +1459,7 @@ public function select_js($table = 'descriptors', $ordinamento, $field_list){ # 
 			$aRet[$nome_campo]['addblank'] = 1;
 			
 			if((array_key_exists('id', $_REQUEST) && !empty($_REQUEST['id']))){
-				# SETTO $rec_id AL LIVELLO PIù ALTO PER AVERE AUTOMATICAMENTE I DEFAULT PER GLI ALTRI CAMPI
+				# SETTO $rec_id AL LIVELLO PIï¿½ ALTO PER AVERE AUTOMATICAMENTE I DEFAULT PER GLI ALTRI CAMPI
 				
 				
 				if(!empty($rMain[$nome_campo]) && $flg_set_id){
@@ -1522,7 +1523,7 @@ public function select_js($table = 'descriptors', $ordinamento, $field_list){ # 
 			if($cnt == 0){
 				$ctrl_loop = 0;
 				$ramo = $rec['DESCRIPTORS_TABLE'];
-				# IL WHILE DEVE DIVENTARE: FINCHè CI SONO RECORD DA VISUALIZZARE (STATO OLTRE ALL'ID_REC DISABLED)
+				# IL WHILE DEVE DIVENTARE: FINCHï¿½ CI SONO RECORD DA VISUALIZZARE (STATO OLTRE ALL'ID_REC DISABLED)
 				while(!empty($aIdType[$ramo]['ID_DESCRIPTORS_TYPE_SELF']) && $ctrl_loop < 20){ # ok
 					$ramo = $aIdType2[$aIdType[$ramo]['ID_DESCRIPTORS_TYPE_SELF']]['DESCRIPTORS_TABLE'];
 					$ctrl_loop++;
@@ -1570,7 +1571,7 @@ public function select_js($table = 'descriptors', $ordinamento, $field_list){ # 
 	return $aRet;
 }
 
-public function select_js2($table = 'descriptors', $ordinamento, $field_list){ # RESTITUISCE UN ARRAY DI CAMPI PER INTERFACCIARSI COL METODO rs::showfull
+public static function select_js2($table = 'descriptors', $ordinamento, $field_list){ # RESTITUISCE UN ARRAY DI CAMPI PER INTERFACCIARSI COL METODO rs::showfull
 	$aRet = array(); # $aRet['K0_ID_STATI']['aval'] = '5'
 	$aFval = array();
 	
@@ -1614,7 +1615,7 @@ public function select_js2($table = 'descriptors', $ordinamento, $field_list){ #
 			$aRet[$nome_campo]['addblank'] = 1;
 			
 			if(array_key_exists('id', $_REQUEST) && !empty($_REQUEST['id'])){
-				# SETTO $rec_id AL LIVELLO PIù ALTO PER AVERE AUTOMATICAMENTE I DEFAULT PER GLI ALTRI CAMPI
+				# SETTO $rec_id AL LIVELLO PIï¿½ ALTO PER AVERE AUTOMATICAMENTE I DEFAULT PER GLI ALTRI CAMPI
 				if(!empty($rMain[$nome_campo]) && $flg_set_id){
 					$rec_id = $rMain[$nome_campo];
 				}
@@ -1674,7 +1675,7 @@ public function select_js2($table = 'descriptors', $ordinamento, $field_list){ #
 			if($cnt == 0){
 				$ctrl_loop = 0;
 				$ramo = $rec['DESCRIPTORS_TABLE'];
-				# IL WHILE DEVE DIVENTARE: FINCHè CI SONO RECORD DA VISUALIZZARE (STATO OLTRE ALL'ID_REC DISABLED)
+				# IL WHILE DEVE DIVENTARE: FINCHï¿½ CI SONO RECORD DA VISUALIZZARE (STATO OLTRE ALL'ID_REC DISABLED)
 				while(!empty($aIdType[$ramo]['ID_DESCRIPTORS_TYPE_SELF']) && $ctrl_loop < 20){ # ok
 					$ramo = $aIdType2[$aIdType[$ramo]['ID_DESCRIPTORS_TYPE_SELF']]['DESCRIPTORS_TABLE'];
 					$ctrl_loop++;
@@ -1720,7 +1721,7 @@ public function select_js2($table = 'descriptors', $ordinamento, $field_list){ #
 }
 
 
-function type_parser($type,$lenght,$comment){
+static function type_parser($type,$lenght,$comment){
 	$mytype="text";
 	if(strpos($type,"text")!==false) 					$mytype="textarea";
 	else if(strpos($type,"decimal")!==false) 			$mytype="iidde";
@@ -1731,7 +1732,7 @@ function type_parser($type,$lenght,$comment){
 	return $mytype;
 }
 
-function &lenght($table=""){
+static function &lenght($table=""){
 	$rs2arr=array();
 	if($rs=@mysql_query($q="SHOW FULL COLUMNS FROM $table")){
 		while($row=mysql_fetch_assoc($rs)){
@@ -1744,7 +1745,7 @@ function &lenght($table=""){
 	return $rs2arr;
 }
 			
-function &_default($table=""){
+static function &_default($table=""){
 	$rs2arr=array();
 	if($rs=@mysql_query("SHOW FULL COLUMNS FROM $table")){
 		while($row=mysql_fetch_assoc($rs)){
@@ -1759,7 +1760,7 @@ function &_default($table=""){
 }
 		
 		
-function default_load($def,$rs2arr){
+static function default_load($def,$rs2arr){
 	foreach ($def as $Field=>$val){
 		if((is_string($rs2arr[$Field]) && trim($rs2arr[$Field])=="") || is_null($rs2arr[$Field]) || (is_bool($rs2arr[$Field]) && $rs2arr[$Field] ==false)){
 			if(!is_null($val) && trim($val)!=""){
@@ -1770,7 +1771,7 @@ function default_load($def,$rs2arr){
 	return $rs2arr;	
 }
 
-function load_default($table="",$rs2arr=array()){
+static function load_default($table="",$rs2arr=array()){
 	if($rs=@mysql_query("SHOW FULL COLUMNS FROM $table")){
 		while($row=mysql_fetch_assoc($rs)){
 			$Field=$row['Field'];
@@ -1788,7 +1789,7 @@ function load_default($table="",$rs2arr=array()){
 	return $rs2arr;
 }
 
-function &_null($table=""){ # RESTITUISCE array['nome campo'] = 1 oppure 0 
+static function &_null($table=""){ # RESTITUISCE array['nome campo'] = 1 oppure 0 
 	$rs2arr=array();
 	if($rs=@mysql_query("SHOW FULL COLUMNS FROM $table")){
 		while($row=mysql_fetch_assoc($rs)){
@@ -1803,7 +1804,7 @@ function &_null($table=""){ # RESTITUISCE array['nome campo'] = 1 oppure 0
 }
 
 # VECCHI METODI
-function get_icursor($qTotRec,$offset){
+static function get_icursor($qTotRec,$offset){
 	$rs=mysql_query($qTotRec);
 	if($rs==true){
 		$totrecord=mysql_num_rows($rs);
@@ -1829,7 +1830,7 @@ function get_icursor($qTotRec,$offset){
 	return $icursor;
 }
 
-function html_cursor($qTotRec,$offset,$argf=array()){
+static function html_cursor($qTotRec,$offset,$argf=array()){
 	$rs=mysql_query($qTotRec);
 	if($rs==true){
 		$totrecord=mysql_num_rows($rs);
@@ -1882,14 +1883,14 @@ function html_cursor($qTotRec,$offset,$argf=array()){
 	return $html_cursor;
 }	
 
-public function getfield($table, $fld, $id){
+public static function getfield($table, $fld, $id){
 	$idn = stringa::tbl2id($table);
 	$q = "SELECT $fld FROM $table WHERE $idn = '$id' LIMIT 0,1";
 	$r = rs::rec2arr($q);
 	return $r[$fld];
 }
 
-public function get_ext($f, $v){
+public static function get_ext($f, $v){
 	$table = stringa::id2table($f);
 	$fld = stringa::id2fld($f);
 	$q = "SELECT $fld, $f FROM $table WHERE $f = '$v'";
@@ -1897,7 +1898,7 @@ public function get_ext($f, $v){
 	return $r[$fld];
 }
 
-public function is_table($table_name, $dbname){ # CONTROLLA SE ESISTE UNA TABELLA NEL DB
+public static function is_table($table_name, $dbname){ # CONTROLLA SE ESISTE UNA TABELLA NEL DB
 	$ret = false;
 	$db = empty($dbname) ? DBNAME : $dbname;
 	$r = rs::inMatrix("SHOW TABLES FROM ".$db);
@@ -1908,8 +1909,5 @@ public function is_table($table_name, $dbname){ # CONTROLLA SE ESISTE UNA TABELL
 	}
 	return $ret;
 }
-
-
-
 }
 ?>

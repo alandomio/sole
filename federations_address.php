@@ -1,5 +1,4 @@
 <?php
-# V.0.1.8
 include_once 'init.php';
 list($il, $jsstatis) = request::get(array('il' => NULL,'jsstatis' => NULL));
 
@@ -86,10 +85,7 @@ $ERR_CRUD = err::crud($rec);
 $_POST = request::adjustPost($_POST);
 
 $rec = request::post2arr($sublable);
-
 $rec = arr::magic_quote($rec);
-//$rec = arr::_trim($rec,array('DESCRIP'));
-
 
 $db -> a_val = array_merge($db->a_val,$rec);
 $db -> dbset();
