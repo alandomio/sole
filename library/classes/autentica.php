@@ -22,6 +22,20 @@ function __construct($aGroups){
 	$this -> aUser = rs::rec2arr($this->query);
 }
 
+/*
+ * logout utente con redirect alla pagina specificata
+ * */
+function logout_user($file='index.php'){
+	$this->autentica = false;
+	$_COOKIE['username'] = NULL;
+	$_COOKIE['password'] = NULL;
+	unset($_COOKIE['username']);
+	unset($_COOKIE['password']);
+	setcookie('username', '',time());
+	setcookie('password', '',time());
+	io::headto($file, array());
+}
+
 function logout(){
 	if(array_key_exists('action', $_GET) && $_GET['action'] == 'logout'){
 		$this -> autentica = false;
@@ -90,8 +104,7 @@ function set_cookie(){
 }
 
 function set_normal_cookie($fino_a){
-	if($fino_a){ # COOKIE A SCADENZA
-		// echo 'persist!';
+	if($fino_a){ /* COOKIE A SCADENZA */
 		setcookie('username',stringa::cifra($this->username,KEYCIFRA),time() + $this->ck_secondi);
 		setcookie('password',stringa::cifra($this->password,KEYCIFRA),time() + $this->ck_secondi);
 	}
@@ -179,7 +192,7 @@ function login_auto($file){ # CONTROLLO STANDARD DELLE POLICIES: USERNAME, PASSW
 			$this -> header_msg('index.php', $this -> ack, $this -> err);
 		}
 		else{
-			if(array_key_exists('login', $_POST)){ # CREO IL COOKIE SOLO SE è STATO PREMUTO IL PULSANTE DI LOGIN
+			if(array_key_exists('login', $_POST)){ # CREO IL COOKIE SOLO SE ï¿½ STATO PREMUTO IL PULSANTE DI LOGIN
 				$this -> set_normal_cookie($is_persist); 
 			}
 			if(FILENAME == 'index' && $this -> autentica == true){ # REDIRECT PAGINA INTERNA

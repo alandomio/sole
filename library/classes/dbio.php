@@ -1,8 +1,6 @@
 <?php
-# V.0.1.8
 !class_exists("io") ? require_once  (CLASSES."io.php") : NULL;
-class dbio extends io
-	{
+class dbio extends io{
 		var $ext_name=NULL;
 		var $a_type=array();
 		var $a_name=array();
@@ -44,7 +42,8 @@ class dbio extends io
 			if(strpos($this->$name->$var,$str)!==false)
 				$this->$name->$var=str_replace($str,"",$this->$name->$var);
 			else
-				$this->$name->$var=$this->$name->$var.$str;}
+				$this->$name->$var=$this->$name->$var.$str;
+		}
 		}
 	function dbset(){
 		foreach($this->a_name as $name){
@@ -87,5 +86,5 @@ class dbio extends io
 			//echo "pri:".$this->$name->fkey."<br>";
 			}
 		}	
-	} #end class	
+}
 ?>

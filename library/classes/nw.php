@@ -1,32 +1,8 @@
 <?php
-# V.0.1.9
-# inserito l'swf_limit
-#
-# V.0.1.8
-# proprietà files diventa array
-#
-# V.0.1.7	
-# - aggiunta la funzione file_list per la creazione automatica della lista file nel menu di navigazione principale 
-# - utilizzo del file nomeTabella_conf.php per centralizzare la configurazione di tutti i singoli file
-#
-# V.0.1.5
-# 
-#
-# V.0.1.8
-# - il campo PATH tabella va chiamato PATH_TABLE in modo da non confondere il nome campo immagine della tabella esterna
-# - passo il percorso delle cartelle a filesystem per svincolarmi dalla cartella updl
-#
-# V.0.1.3
-# - il nome tabella è ricavato dal nome file se non specificato nel costruttore
-# - nuovi nomi file per facilitare visualizzazione a filesystem: table.php, table_c.php, table_f.php, table_u.php
-# - creazione automatica dei campi, sia nella lista che nel crud
-# - eliminato messaggio 'ritrasmissione dati nell'upload swf'
-# - creazione automatica delle etichette delle schede (SCHEDA e ALLEGATI)
-# - creazione automatica di tutti i link di navigazione inerenti alla scheda (lista, elimina ecc...)
-#
-# V.0.1.2
-# SE ESISTE IL FILE DI CARICAMENTO MULTIPLO, SI DEDUCE CHE ESISTA LA GESTIONE MULTIPLA DI FILE
-
+/**
+ * gestisce le operazioni piÃ¹ ripetitive
+ * salvataggio immagini, allegati
+ */
 class nw{
 public function __construct($table){
 	$this->table = !empty($table) ? strtolower($table) : strtolower(stringa::leftfrom(FILENAME,'_'));
@@ -50,6 +26,7 @@ public function __construct($table){
 	
 	$this->query_list = '';
 	$this->left_join = '';
+	$this->extra_join = '';
 	$this->offset = 30;
 	$this->files = array(); # $this->files = array('files','images'); // is_file($this->table.'_f.php') ? true : false; # 1
 	$this->cnt_file = 0;
@@ -153,7 +130,7 @@ public function action_type($val){
 
 # MENU
 
-public function file_list($table){
+public static function file_list($table){
 	return array($table, $table.'_c',$table.'_f',$table.'_u');
 }
 
@@ -207,10 +184,10 @@ public function query_list(){
 */	}
 		
 	$select = substr($select, 0, strlen($select)-2);
-	$this->query_list = "SELECT $select FROM ".$this->table.$this->left_join;
+	$this->query_list = "SELECT $select FROM ".$this->table.$this->left_join.$this->extra_join;
 }
 
-public function short_list($a){ # PERMETTE DI USARE QUERY CON MENO CAMPI E QUINDI PIù LEGGERE
+public function short_list($a){ # PERMETTE DI USARE QUERY CON MENO CAMPI E QUINDI PIï¿½ LEGGERE
 	$field_list=rs::rec2arr("SELECT * FROM ".$this->table." LIMIT 0,1");
 	$select='';
 	foreach($field_list as $k => $v){
@@ -289,24 +266,6 @@ public function update_ext($aa, $ck, $id){
 	return "aggiunte $added, rimosse $removed";
 }
 
-function allinea_dizionario($id, $rs){ 
-	$qDel = "DELETE FROM dizionarios WHERE ID_ARTICLE = '$id'";
-	mysql_query($qDel);
-	$aParole = array();
-	foreach($rs as $k => $v){
-		//print $k.' '.$v.BR;
-		$str = io::lable($rs, $k, false, 0);
-		$a = stringa::prepara_dizionario($str);
-		
-		foreach($a as $kk => $parola){
-			if(strlen($parola)>2){
-				$qIns = "INSERT INTO dizionarios (PAROLA_CHIAVE, CAMPO_PROVENIENZA, ID_ARTICLE) VALUES ('".prepare4sql($parola)."', '".$k."', '".$id."')";
-				mysql_query($qIns);
-			}
-		}
-	}
-}
-
 # OPERAZIONI CON I FILE
 public function files($val){ # true o false
 	$this->files = $val; 
@@ -367,29 +326,10 @@ function dele_main_folder($id, $folder){
 	else return false;
 }
 
-function delete_files_and_record($id, $folder){
-	if($this->personal_folders == true){
-		$this->set_upld_dirs($folder);
-	}
-	$this->dele_img($id); # CANCELLA FILE SINGOLO
-	if($this->files) $this->dele_files($id); # CANCELLA ALBUM E ALLEGATI
-	if(mysql_query("DELETE FROM ".$this->table." WHERE ".$this->f_id."='$id'")) return true;
-	else return false;
-}
-
-
 function dele_record($id){ # CANCELLAZIONE RECORD SEMPLICE
 	if(mysql_query("DELETE FROM ".$this->table." WHERE ".$this->f_id."='$id'")) return 1;
 	else return false;
 }
-
-
-/*function dele_personal_dirs($dir){
-	foreach($this->folder_list as $k => $v){
-		if(is_dir($this->main_path.$dir.'/'.$v)) rmdir($this->main_path.$dir.'/'.$v);
-	}
-	if(is_dir($this->main_path.$dir) && strlen($dir)>0) rmdir($this->main_path.$dir);
-}*/
 
 function dele_personal_dirs($dir){
 	foreach($this->folder_list as $k => $v){
@@ -408,32 +348,6 @@ function dele_img($id){ # CANCELLA FILE SINGOLO
 	}
 }
 
-/*function dele_files($id){ # CANCELLA ALBUM E ALLEGATI RIDONDO LA PRESENZA DEL NOME CARTELLA ANCHE IN files
-	$cnt_dele_files = 0;
-	
-	$rec=rs::rec2arr("SELECT * FROM ".$this->table." WHERE ".$this->f_id."='$id'");
-	
-	$qAll = "SELECT files.ID_FILE, files.FOLDER_FILE, files.TYPE, files.TITLE, files.DESCRIP, files.PATH, ".$this->file_table.".".$this->f_id." FROM ".$this->file_table." Left Join files ON ".$this->file_table.".ID_FILE = files.ID_FILE WHERE ".$this->file_table.".".$this->f_id." = '$id'";
-	
-	$aFiles = rs::inMatrix($qAll);
-
-	foreach($aFiles as $file){
-		foreach($this->folder_list as $k => $v){
-			if($k=='img_main_big' || $k=='img_main_web') continue;
-			
-			//echo $this->$k.$file['PATH'].BR;
-			if(is_file($this->$k.$file['PATH'])){
-				if(unlink($this->$k.$file['PATH'])){
-					$q_mul = "DELETE FROM ".$this->file_table." WHERE ID_FILE = '".$file['ID_FILE']."'";
-					$q_fil = "DELETE FROM files WHERE ID_FILE = '".$file['ID_FILE']."'";
-					if(mysql_query($q_mul) && mysql_query($q_fil)) $cnt_dele_files++;
-				}
-			}
-		}
-	}
-	return $cnt_dele_files;
-}
-*/
 function dele_files($id){ # CANCELLA ALBUM E ALLEGATI RIDONDO LA PRESENZA DEL NOME CARTELLA ANCHE IN files
 	$cnt_dele_files = 0;
 	$rec=rs::rec2arr("SELECT * FROM ".$this->table." WHERE ".$this->f_id."='$id'");

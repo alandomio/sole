@@ -1,7 +1,7 @@
 <?php
 class mydb{
 
-function post2db($id, $table){
+static function post2db($id, $table){
 	$ret = array('result' => false, 'message' => '', 'id' => $id);
 	
 	$msg = new myerr();
@@ -76,7 +76,7 @@ function post2db($id, $table){
 	return $ret;
 }
 
-function get_info($table){
+static function get_info($table){
 	$ret = array();
 	$ret['table'] = $table;
 	$ret['id'] = stringa::tbl2id($table);

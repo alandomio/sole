@@ -7,29 +7,34 @@ function __construct($a){
 	$this -> id_file = '';
 	$this -> add_ajax = false;
 	
-	$this -> title = '';			# SEO TITLE
-	$this -> description = '';		# SEO DESCRIPTION
-	$this -> keywords = '';			# SEO KEYWORDS
+	/*
+	 * meta tag
+	 * */
+	$this->title = '';
+	$this->description = '';
+	$this->keywords = '';
 	
 	$this -> system_errors = '';
 	
-	$this -> aCss = array();		# CSS
-	$this -> aJsf_head = array();	# FILES JS HEAD
-	$this -> aJsc_head = array();	# CODES JS HEAD
-	$this -> aJsf_footer = array();	# FILES JS FOOTER
-	$this -> aJsc_footer = array();	# CODES JS FOOTER
+	/*
+	 * css
+	 * */
+	$this->aCss = array();
+	$this->css = '';
 	
-	$this -> css = '';				# CSS
-	$this -> jsf_head ='';			# FILES JS HEAD
-	$this -> jsc_head = '';			# CODES JS HEAD
-	$this -> jsf_footer = '';		# FILES JS FOOTER
-	$this -> jsc_footer = '';		# CODES JS FOOTER
-
-	$this -> js_head = '';			# CODICE JS NELL'HEADER
-	$this -> js_footer = '';		# CODICE JS NEL FOOTER
+	/*
+	 * lista files e codici da includere
+	 * */
+	$this->js_head = array();
+	$this->js_footer = array();
+	$this->jsc_head = array();
+	$this->jsc_footer = array();
 	
-	$this -> err = array();			# MESSAGGI DI ERRORE
-	$this -> ack = array();			# MESSAGGI DI AVVISO
+	/*
+	 * messaggi
+	 * */
+	$this->err = array();
+	$this->ack = array();
 	
 	
 	if(!empty($_REQUEST['err'])){ $this -> err[] = $_REQUEST['err']; }
@@ -54,7 +59,6 @@ function get_files(){
 }
 
 function set_meta_from_db(){ 
-	// $q = "SELECT * FROM myfiles WHERE FILE_".LANG_DEF." = '".$this -> file."' LIMIT 0, 1";
 	$q = "SELECT * FROM myfiles WHERE ID_MYFILE = '".$this -> file."' LIMIT 0, 1";
 	$r = rs::rec2arr($q);
 	
@@ -89,47 +93,39 @@ function add_css($s){
 function set_css(){
 	$this -> css = '';
 	foreach($this -> aCss as $k => $style){
-	$this -> css .= '<link href="'.$style.'" rel="stylesheet" type="text/css" />
-';
+	$this->css .= '<link href="'.$style.'" rel="stylesheet" type="text/css" />'."\n";
 	}
 }
 
-function add_js($s, $type, $place){
+/*
+ * stampa il codice html per l'inclusione dei file
+ * */
+function print_js($position='head', $type='file'){
 	if($type == 'file'){
-		if($place == 'head'){ $this -> aJsf_head[] = $s;}
-		elseif($place == 'footer'){ $this -> aJsf_footer[] = $s; }
+		
+		$a= $position=='head' ? $this->js_head : $this->js_footer;
+		ksort($a);
+		
+		foreach($a as $file){
+			if( strpos($file,'<script') !== false){
+				print $file."\n";
+			} else {
+				print '<script type="text/javascript" src="'.$file.'"></script>'."\n";
 	}
-	elseif($type == 'code'){
-		if($place == 'head'){ $this -> aJsc_head[] = $s;}
-		elseif($place == 'footer'){ $this -> aJsc_footer[] = $s; }
 	}
-	$this -> set_js();
 }
+	elseif($type=='code'){
+		$a= $position=='head' ? $this->jsc_head : $this->jsc_footer;
+		ksort($a);
 
-function set_js(){
-	$this -> jsf_head = '';
-	$this -> jsc_head = '';
-	$this -> jsf_footer = '';
-	$this -> jsc_footer = '';
-
-	foreach($this -> aJsf_head as $k => $v){
-		$this -> jsf_head .= $v.'
-';
+		foreach($a as $code){
+			if( strpos($code,'<script') !== false){
+				print $code."\n";
+			} else {
+				print '<script type="text/javascript">'.$code.'</script>'."\n";
 	}
-	foreach($this -> aJsf_footer as $k => $v){
-		$this -> jsf_footer .= $v.'
-';
 	}
-	foreach($this -> aJsc_head as $k => $v){
-		$this -> jsc_head .= $v.'
-';
 	}
-	foreach($this -> aJsc_footer as $k => $v){
-		$this -> jsc_footer .= $v.'
-';
-	}
-	$this -> js_head = $this -> jsf_head.$this -> jsc_head;
-	$this -> js_footer = $this -> jsf_footer.$this -> jsc_footer;
 }
 
 function catch_buffer(){
@@ -186,7 +182,6 @@ function add_msg($a, $type){
 			}
 		}
 	}
-
 }
 
 function print_msg($print){
@@ -217,6 +212,162 @@ function print_msg($print){
 		$ret = '<div id="alert">'.$listerr.$listack.'</div>';
 		if($print){ print $ret; }
 		return $ret;		
+	}
+}
+
+/*
+ * aggiunge un nuovo gruppo
+ * */
+function add_js_group($groupname, $files_list, $position, $cache='on', $place='footer'){
+	/*
+	 * cache: on off debug
+	 * */
+	$a=array(
+			'name'		=>	$groupname,
+			'place'		=>	$place,
+			'cache'		=>	$cache,
+			'files'		=>	$files_list,
+			'position'	=>	$position,
+			);
+
+	/*
+	 * costruisce la cache e aggiunge il gruppo alla lista
+	 * */
+	$this->add_multi_js($a);
+}
+
+/*
+ * aggiunge un file js senza metterlo in cache
+ * */
+function add_js($path_file, $position=false, $place='head', $type="file"){
+	if($type=='file'){
+		if($place=='head'){
+			
+			if( empty($position)){
+				$position=count($this->js_head)+1000;
+			}
+			$this->js_head[$position]=$path_file;
+			
+		} else { /* footer */
+			
+			if( empty($position)){
+				$position=count($this->js_footer)+1000;
+			}
+			$this->js_footer[$position]=$path_file;
+		}
+	}
+	
+	else { /* code */ 
+		if($place=='head'){
+			if( empty($position)){
+				$position=count($this->jsc_head)+1000;
+			}
+			$this->jsc_head[$position]=$path_file;
+			
+		} else { /* footer */
+			if( empty($position)){
+				$position=count($this->jsc_footer)+1000;
+			}
+			$this->jsc_footer[$position]=$path_file;
+		}
+	}
+	
+	if( ! is_numeric($position)){
+		echo BR."Insert position for <strong>".stringa::bfw($path_file, 'src="', '"').'</strong>:'.BR.'add_js($path_file, $position_number, "head / footer", "file / code" )'.BR;
+	}
+}
+
+/*
+ * genera i file js da mettere in cache
+ * */
+function add_multi_js($group){
+	global $on_line;
+
+	require_once CLASSES_PATH.'extra/class.JavaScriptPacker.php';
+
+	$script='';
+
+	$js_filename = $group['name'].'.js';
+	$cached = JS_MAIN.'cache/'.strtolower(LANG_DEF) . '_' .$js_filename;
+
+	/*
+	 * modalità per la gestione della cache:
+	 *
+	 * cache=on: il file viene scritto solo se non presente a filesystem (usato per i file principali)
+	 * cache=off: il file viene sovrascritto ad ogni chiamata (potrebbero esserci problemi su chiamate contemporanee multiutente)
+	 * cache=debug: il file viene sempre sovrascritto sul server di sviluppo e mai su quello di produzione, a meno che non esista a filesystem
+	 * */
+
+	$generate=true;
+
+	switch ( $group['cache'] ) {
+		case 'on':
+			$generate=false;
+			break;
+		case 'off':
+			$generate=true;
+			break;
+		case 'debug':
+			if( ! $on_line){
+				$generate=true;
+			} else {
+				$generate=false;
+			}
+				
+			break;
+		default:
+			$generate=false;
+			break;
+	}
+	
+	/*
+	 * bypassa la configurazione del gruppo e forza l'aggiornamento del file
+	 * */
+	if( defined(USE_JSCACHE) && USE_JSCACHE=='false'){
+		$generate=true;
+	}
+
+	/*
+	 * se non esiste a filesystem viene sempre generato
+	 * */
+	if( ! is_file($cached)){
+		$generate=true;
+	}
+	
+	/*
+	 * genera il file
+	 * */
+	if($generate) {
+		/*
+		 * concatena gli script
+		 * */
+		foreach($group['files'] as $path){
+			$script .= file_get_contents($path)."\n";
+		}
+
+		/*
+		 * inserisce le traduzioni per il file js
+		 * */
+		$script=preg_replace_callback('/@@(.+?)@@/', '__', $script);
+
+		/*
+		 * salva il file nella cartella di cache
+		 * */
+		$offuscamento=false;
+		if ($offuscamento){
+			$packer = new JavaScriptPacker($script, 'None', true, false);
+			$script = $packer->pack();
+		}
+		/* else {
+			$packed=$script;
+		}*/
+		file_put_contents($cached, $script);
+	}
+	
+	if($group['place']=='footer'){
+		$this->js_footer[$group['position']]=$cached;
+	} else {
+		$this->js_head[$group['position']]=$cached;
 	}
 }
 

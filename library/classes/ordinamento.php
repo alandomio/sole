@@ -18,10 +18,10 @@ var $search;
 var $ordina;
 var $href;
 var $sortbutton;
-public function __construct($a){
+public function __construct($a=array()){
 	$this->campi=$a; # $a = array( 'dd' => 'DESCRIZIONE', 'hp' => 'IS_HOME')
 	$this->chiavi=array_flip($a);
-	$this->v_type = array('sa', 'sd', 'in', 'nn', 'sl', 'va', 'lk', 'mi', 'ma', 'bl', 'ck', 'tx', 'nc', 'aa', 'mc', 'js','kk', 'ba', 'bb', 'bc', 'bd', 'ln','ic','mm');
+	$this->v_type = array('sa', 'sd', 'in', 'nn', 'sl', 'va', 'lk', 'mi', 'ma', 'bl', 'ck', 'tx', 'nc', 'aa', 'mc', 'js','kk', 'ba', 'bb', 'bc', 'bd', 'ln','ic','mm','ms');
 	foreach($this->v_type as $k) { $this->$k = array(); }
 	$this->aFields = array();
 	$this->ordina = array();
@@ -41,7 +41,6 @@ public function __construct($a){
 	$this->inputs = array();
 	$this->campi_force = array('select' => array(),'checkbox' => array(), 'text'=>array(), 'range' => array(), 'multicheck' => array());
 	$this->link_sort = array();
-	//$this -> js_dpt = array();
 	$pref = '';
 	$this->set_filtro($_REQUEST);
 }
@@ -76,12 +75,23 @@ public function set_filtro($a){
 				}
 			}
 		}
-		if($pref=='js'){ # campi hidden javascript
-			//print $v.' '.$varname.BR;
+		
+		if($pref=='ms'){ // MULTISELECT
+			if(is_array($v)){
+				foreach($v as $k => $val){
+					if(is_numeric($val)){
+						$this->ms[$varname][] = $val;
+					} else { // quando azzero il multiselect non ho valori request. In questo modo so comunque di dover azzerare la tabella
+						$this->ms[$varname]['relationtable']=$val;
+					}
+				}
+			}
+		}
+		
+		if($pref=='js'){
 			if(empty($v)) $v = '0';
 			$this->js[$varname] = $v; 
 			$this->hidden[$k] = $v; 
-			//if(strlen(trim(strip_tags($v)))>0){	$this->href[$k]=$v;	}
 		} 
 		
 		# VARIABILE CURSORI
@@ -92,6 +102,7 @@ public function set_filtro($a){
 				$this -> href['ic'] = $v;
 			}
 		} 
+		
 		# TRATTAMENTO VARIABILI FUNZIONALITA' (ELIMINAZIONI MULTIPLE ECC...), AMPLIABILI ALL'OCCORRENZA
 		if($pref=='aa'){$this->aa[] = $varname; }
 		elseif($pref=='vw'){$this->vw = $v; $this->href['vw']=$v; } # USATA SINGOLARMENTE TIPO VIEW
@@ -196,9 +207,6 @@ public function where($str){ # GENERAZIONE WHERE
 			elseif(in_array($k3, $field_list)){ $nome_campo = $k3; }
 			else{ $is_field = false; }
 			
-			
-			//print $id_f.' '.$nome_campo.'pipo'.BR;
-			
 			if($is_field){
 				$where.= $this->tabella.".".$nome_campo." = '$valore' AND\n";
 			}		
@@ -209,27 +217,8 @@ public function where($str){ # GENERAZIONE WHERE
 	foreach($this->nn as $campo => $valore){if(!empty($campo))$where.= "$campo IS NOT NULL AND\n";}
 	foreach($this->in as $campo => $valore){if(!empty($campo))$where.= "$campo IS NULL AND\n";}
 
-
-	# PAROLA CHIAVE
-	$qKw = '';
-/* 	if(!empty($this -> kw)){
-		if(empty($this -> rd) || $this -> rd != '2'){ # RICERCA PER PAROLA CHIAVE
-		$aParole = stringa::prepara_dizionario($this -> kw);
-		$aParole = array_unique($aParole);
-		$or = '';
-		foreach($aParole as $k => $v){
-			$or .= "PAROLA_CHIAVE LIKE '%$v%' OR ";
-		}
-		if(!empty($or)) $qKw = "articles.ID_ARTICLE IN (SELECT ID_ARTICLE FROM dizionarios WHERE (".stringa::togli_ultimi($or, 3).")) AND\n";
-		# pulizia kw e creazione del where campo = 'val' or campo = 'val2' ...
-		}
-		else{ # RICERCA PER CODICE
-			$qKw = "articles.ID_ARTICLE = '".$this -> kw."' AND\n";
-		}
-	} */
-
 	$where .= $sort;	
-	$where = strlen($where)>0 ? 'WHERE '.$qKw.substr($where,0,strlen($where)-4) : '';
+	$where = strlen($where)>0 ? 'WHERE '.substr($where,0,strlen($where)-4) : '';
 	
 	foreach($this->sa as $campo => $valore){ 
 		$tmpTbl = '';		
@@ -535,8 +524,6 @@ public function filtri_link($qMain, $aOrdine){
 	# IMPLEMENTARE UN ORDINAMENTO DEI kk IN MODO DA FORNIRLO SEMPRE UGUALE. SI POTREBBE PASSARE COME PARAMETRO UN ARRAY GENERICO E CONFRONTARLO COL KK E ORDINARLO DI CONSEGUENZA
 	# IN QUESTO ARRAY POSSIAMO ANCHE INSERIRE IL NOME DELL'ETICHETTA GENERICA RELATIVA (kkstatis => Localizzazione).
 	
-
-	
 /*	$aVarMod = array(	'2' => array('jscasa1s'),
 						'3' => array('jsves','jsmta1s','jsmtm1s'),
 						'4' => array('jslv1s'),
@@ -682,7 +669,6 @@ public function filtri_link($qMain, $aOrdine){
 				$idDpt = $rec['ID_DESCRIPTOR'];
 				$idDptSelf = $rec['ID_DESCRIPTOR_SELF'];
 				$backUri[$varname] = $idDptSelf;
-				//if($cnt == 0) $aRet['lnk_dis'] .= '<li>'.$aOrdine[$t].'<li>'."\n";
 				$tmp_li_dis = '<li class="elimina_ricerca">'.io::ahref(FILENAME.'.php', $backUri, $lable, $class="").'</li>'."\n".$tmp_li_dis;
 			}
 			$id_precedente = $id;
@@ -695,9 +681,6 @@ public function filtri_link($qMain, $aOrdine){
 			$tmp_li_dis = '';
 		}
 	}
-	//$aRet['lnk_dis'] = $tmp_li_dis;
-	//print $t;
-
 	$qPrewhere = stringa::lfw($qMain, "WHERE");
 	$qPostwhere = stringa::rfw($qMain, "WHERE");
 	

@@ -438,6 +438,31 @@ class EvalMath {
 										WHERE flats.ID_BUILDING=".$this->building." AND meters.CODE_METER LIKE '$token' ");
 		*/
 		
+		// Se year e uploadtype sono entrambi 0 allora verifico solo che i contatori esistano
+		
+		if($this->uploadtype == 0 && $this->year==0)	{
+			$sql = "SELECT *
+			FROM meters
+			LEFT JOIN flats_meters USING (ID_METER)
+			LEFT JOIN flats ON flats.ID_FLAT = flats_meters.ID_FLAT
+			WHERE 
+			flats.ID_BUILDING=".$this->building."  AND meters.CODE_METER = '$token'
+			";
+			
+			$r = rs::inMatrix($sql);
+			
+			if(count($r))	
+				return 1;
+			else	{
+				$this->isValid = false;
+				$this->isWrong = true;
+				$this->explain .= $token;
+				return 1;
+			}
+				
+			
+		}
+		
 						
 			$sql = "SELECT msoutputs.*, meters.ID_OUTPUT, meters.A, meters.B, meters.ID_RF, meters.FORMULA, meters.ID_SUPPLYTYPE
 					FROM msoutputs 
@@ -483,7 +508,7 @@ class EvalMath {
 					return 0; 
 		
 			}	else	{
-				// Se non ho MSOUTPUT allora, se è un contatore formula, lo valuto
+				// Se non ho MSOUTPUT allora, se ï¿½ un contatore formula, lo valuto
 				if(!empty($meter[0]) && $meter[0]['ID_RF']==2)	{
 					if($this->DEBUG)	
 						echo $token.':'. $meter[0]['FORMULA'].' - ';

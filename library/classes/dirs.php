@@ -1,5 +1,4 @@
 <?php
-# V.0.1.8
 class dirs{
 
 public function __construct($path){
@@ -15,19 +14,13 @@ function check_dir(){
 	if(!@opendir($this->fullpath)){
 		mkdir($this->fullpath, 0777);
 	}
-	//print 'FULLPATH '.$this -> fullpath.BR;
 }
 
 function mk_upld(){
 	foreach($this->mk_upld_list as $new_folder){
 		$dirname = $this->fullpath.'/'.$new_folder;
 		if(!@opendir($dirname)) mkdir($dirname, 0777);
-		print 'DIRNAME '.$dirname.BR;
 	}
 }
-
-
-
-
 }
 ?>

@@ -1,7 +1,7 @@
 <?php
-# V.0.1.5
 class err{
-	function allfalse($arr){
+	
+static function allfalse($arr){
 		$count=count($arr);
 		$iEmpty=0;
 		foreach($arr as $k=>$v){
@@ -10,7 +10,7 @@ class err{
 		return $iEmpty==$count ? true : false;
 		}
 
-	function ackerr($ack,$err){
+static function ackerr($ack,$err){
 		$listerr = ''; $listack = ''; $flag = false;
 		if(!empty($err)){
 			foreach(arr::strip($err) as $s){
@@ -34,13 +34,12 @@ class err{
 			$flag = true; }
 		}	
 		
-			
 		if($flag==true){
 			return '<div id="alert">'.$listerr.$listack.'</div>';
 		}
 	}
 	
-	function geturl($ack,$err){
+static function geturl($ack,$err){
 		$listerr = ''; $listack = ''; $flag_err = false; $flag_ack = false;
 		if(!empty($err)){
 			foreach(arr::strip($err) as $s){
@@ -60,14 +59,14 @@ class err{
 		else return $listerr.$listack;
 	}
 
-	function msgcrud($err){
+static function msgcrud($err){
 	if(empty($err['SYSTEMERR']) && err::allfalse($err)==false ){
 		$err['SYNTAXERR']=SYNTAXERR;
 		$err['SYNTAXPRT']=SYNTAXPRT;}
 	return implode("<br>",arr::strip($err));
 	}
 	
-	function msgcrudlist($err){
+static function msgcrudlist($err){
 	if(empty($err['SYSTEMERR']) && err::allfalse($err)==false ){
 		$err['SYNTAXERR']=SYNTAXERR;
 		$err['SYNTAXPRT']=SYNTAXPRT;}
@@ -78,7 +77,7 @@ class err{
 	return $list;
 	}
 
-function msgacklist($err){
+static function msgacklist($err){
 	$list='';
 	foreach(arr::strip($err) as $alert){
 		$list.='<li>'.$alert.'</li>';}
@@ -86,7 +85,7 @@ function msgacklist($err){
 	return $list;
 	}
 	
-	function sql($msg){
+static function sql($msg){
 			$myerr=rs::err();
 			$msg=$myerr==false ? "" : $msg;
 			$risp=ERR_SQL==0 ? "" : "";
@@ -98,7 +97,7 @@ function msgacklist($err){
 			return $risp;
 			}
 			
-	function sqlcrud($msg){
+static function sqlcrud($msg){
 			$myerr=rs::err();
 			$msg=strpos($myerr,"1451")!==false || strpos($myerr,"parent row") !==false ? FOREIGNERR : $myerr;
 			$msg=$myerr==false ? "" : $msg;
@@ -110,11 +109,12 @@ function msgacklist($err){
 			return $risp;
 			}
 	
-	function eko($stringa_err){
+static function eko($stringa_err){
 		if(EKO_ERR=="1")
-			print($stringa_err);}
+		print($stringa_err);
+}
 
-	function my_or_system($systemerr,$my_systemerr){
+static function my_or_system($systemerr,$my_systemerr){
 		$my_systemerr=is_array($my_systemerr) ? implode("\n",$my_systemerr): $my_systemerr;
 		$risp=MY_OR_SYSTEMERR==0 ? " " : " ";
 		$risp=MY_OR_SYSTEMERR==1 ? $systemerr  : $risp;
@@ -122,7 +122,8 @@ function msgacklist($err){
 		$risp=MY_OR_SYSTEMERR==3 ? $systemerr." ".$my_systemerr : $risp;
 		return $risp;
 		}
-	function crud(){
+
+static function crud(){
 		$arr=array();
 		for($i=0;$i<func_num_args();$i++){
 			$aArg=func_get_arg($i);

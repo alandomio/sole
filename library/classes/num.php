@@ -62,7 +62,7 @@ function itaf($valuta,$um,$zerodec)	{
 	
 
 	
-function format($int, $n_decimals,$dec_sep, $thousands_sep){
+static function format($int, $n_decimals,$dec_sep, $thousands_sep){
 	return number_format($int, $n_decimals, $dec_sep, $thousands_sep);
 }
 	
