@@ -1,0 +1,20 @@
+.jqueryslidemenu{ font-weight:bold; background:none; text-align:left; margin: 0; padding:0}
+.jqueryslidemenu ul{margin:0; padding:0; list-style-type:none}
+.jqueryslidemenu ul li{position:relative; display:inline; float:left}
+.jqueryslidemenu ul li.level1{position:relative; display:inline; float:left}
+.jqueryslidemenu ul li a{display:block; height:18px; padding:10px 20px; margin:4px 0 0 0; text-decoration:none}
+.jqueryslidemenu ul li a.menu_sel{ color:#f59f23!important;}
+
+.jqueryslidemenu li.sub{}
+.jqueryslidemenu li.sub a{display:block; background-color:#202020; height:28px; color:#fff; padding:14px 20px 0 20px; margin:0 0 0 0; border-bottom:1px solid #333; color:#2d2b2b; text-decoration:none}
+* html .jqueryslidemenu ul li a{display:inline-block}
+.jqueryslidemenu ul li a:link, .jqueryslidemenu ul li a:visited{color:#f59f23}
+.jqueryslidemenu ul li a:hover{ color:#f59f23; }
+.jqueryslidemenu ul li.sub a:hover{background:#333}
+.jqueryslidemenu ul li ul{position:absolute; left:0; display:block; visibility:hidden}
+.jqueryslidemenu ul li ul li{display:list-item; float:none}
+.jqueryslidemenu ul li ul li ul{top:0}
+.jqueryslidemenu ul li ul li a{font:normal 15px; width:134px; padding:5px; margin:0; border-top-width:0; border-bottom:1px solid #333;}
+.jqueryslidemenuz ul li ul li a:hover{background:#eff9ff; color:#f59f23}
+.downarrowclass{position:absolute; top:22px; right:7px}
+.rightarrowclass{position:absolute; top:6px; right:5px}

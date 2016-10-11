@@ -1,0 +1,14 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^sitemap.xml$ sitemap.php [QSA,L]
+    RewriteRule ^home.html$ index.php?page=home [QSA,L]
+    RewriteRule ^index.html$ index.php?page=index [QSA,L]
+	RewriteRule ^json.php$ json.php [QSA,L]
+	RewriteRule ^json_android.php$ json_android.php [QSA,L]
+	RewriteRule ^grid.php$ grid.php [QSA,L]
+    RewriteRule ^pagina.html$ index.php?page=pagina [QSA,L]
+    RewriteRule ^(.*).js$ js.php?source=$1 [QSA,L]
+    
+</IfModule>

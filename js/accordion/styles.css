@@ -1,0 +1,25 @@
+dd{ margin:0;}
+dl.accordion dd ul{ font-weight:normal; margin:0 0 10px 0; list-style:none;  }
+dl.accordion dd ul li{margin:0 0 0 0; padding-left: 6px;font-size:11px; }
+dl.accordion dd ul a{ display:block;  text-decoration:none;  color:#fff; font-weight:normal; }
+dl.accordion dd ul a:first-letter{ text-transform:capitalize;}
+dl.accordion dd ul a:hover{ color:#f6e636;}
+
+dl.accordion{  margin:0 0 0 0; }
+dl.accordion dt{ font-size: 12px;font-weight:normal;position:relative; margin:0 0 3px 0;  color:#fff; cursor:pointer;  line-height:29px;}
+dl.accordion dt span:first-letter{ text-transform:capitalize!important;}
+dl.accordion dt:hover{ color:#f6e636; text-decoration:none; background:none; /*background:url(../img_layout/img_triangolo.png) left no-repeat;*/ }
+dl.accordion dt span{ /*height:12px;*/ padding:0; display:block;background: #898989 url(../images/menu_sx_li.png) 5px 8px no-repeat; padding:0 6px 0 30px;font-weight:bold;}
+dl.accordion dt.open span{color:#f6e636; background: #898989 url(../images/menu_sx_li_opened.png) 5px 8px no-repeat; padding:0 6px 0 30px;}
+
+dl.accordion dd{position: relative;	overflow: hidden;}
+dl.accordion dd.sub_accordion{}
+dl.accordion dd.accordion_content{	/*padding: 0 10px 0 25px;*/}
+dl.accordion dd.accordion_content p{padding: 5px 0 7px 0;}
+dl.accordion dd dl dt{padding-left:10px; background-position: 20px 0;}
+dl.accordion dd dl dd ul{ padding-left: 20px; background-position: 40px 0;}
+dl.accordion dd dl dd.accordion_content{	padding-left: 45px;}
+dl.accordion dd dl dd dl dt{ padding-left: 65px;	background-position: 40px 0;}
+dl.accordion dd dl dd dl dd.accordion_content{	padding-left: 65px;}
+dl.accordion dd dl dd dl dd dl dt{padding-left: 85px;background-position: 60px 0;}
+dl.accordion dd dl dd dl dd dl dd.accordion_content{padding-left: 85px;}

@@ -1,0 +1,13 @@
+.loady{
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+	background: #fff url(spinning.gif) center center no-repeat;
+	opacity: 0.8;
+}
+
+.loady.error{
+	background: red;
+}

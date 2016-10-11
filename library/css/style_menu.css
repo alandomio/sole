@@ -1,0 +1,29 @@
+@charset "utf-8";
+
+
+/*#menu_top{ position:absolute; top:0px; left:30px; margin:0 0 0 0; height:80px; }
+
+.menu_col{position:relative; width:140px; height:60px; float:left; display:inline; margin:8px 0 0 -1px; }
+	
+*/	
+
+/* 1° livello voce principale */
+/*a.menu_voce{font-size:11px; display:block; width:138px; padding:5px 0; letter-spacing:1px; font-weight:bold; text-decoration:none; position:absolute; bottom:-10px; left:1px; text-align:center; background:url(../img_ar/bg_puls_neutro.gif) bottom repeat-x #fff; border-top:5px solid #666; color:#000000; }
+a:hover.menu_voce, a.sel{ background-color:#adb2ab; border-top:5px solid #6d99ca;}
+*/
+
+
+ /* 2° livello voci secondarie */
+/*.menu_col ul{ height:0; letter-spacing:1px; margin:0; padding:0; list-style:none; position:absolute; bottom:14px; left:2px;}
+.menu_col ul.sel{height:80px;}
+.menu_col ul li{font-size:11px; line-height:11px; height:15px;}
+* html .menu_col, *:first-child+html .menu_col{ margin:10px 0 0 -1px;}
+* html .menu_col ul li, *:first-child+html .menu_col ul li{ margin:0 0 -3px 0!important; }
+.menu_col ul li a{color:#888; text-decoration:none; display:block; padding:0; font-size:11px!important; text-align:left;}
+.menu_col ul li a:hover{ color:#000;} 
+.menu_col ul li a.sel{background: url(../img_ar/bullet_red.gif) left no-repeat !important; padding-left:6px; color:#000; border:none!important;}
+*/
+
+
+
+

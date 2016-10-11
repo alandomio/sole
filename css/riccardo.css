@@ -1,0 +1,19 @@
+#table-menu{ background-color:#f7f7f7; border:1px solid #ccc; padding:6px; width:786px; height:16px;}
+#table-menu #buttons{ float:right; }
+#table-menu a img{ margin-left:12px;  opacity:1; filter:alpha(opacity=1);  }
+#table-menu a:hover img{opacity:0.6; filter:alpha(opacity=0.6);}
+
+#head-table{  background-color:#4C4C4C; padding:6px 6px 6px 140px; width:654px; height:16px;}
+#head-table div{ float:left; color:#fff; }
+
+
+
+.inputfull label{ display:block; float:left; }
+.inputfull input{ float:left; width:100%; margin:8px 0; padding:4px 0; }
+.inputfull select{ float:left; width:100%; margin:8px 0; padding:4px 7px;}
+
+.fixed { position: fixed!important; top: 0!important; }
+
+
+#box-col-left{ background-color:#f7f7f7; border:1px solid #ccc; padding:12px; margin-bottom:6px; width:200px; }
+#box-col-left select{ margin-bottom:6px; }

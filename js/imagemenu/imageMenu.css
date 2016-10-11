@@ -1,0 +1,91 @@
+
+/**************************************************************
+
+	Image Menu
+	v 2.2
+
+**************************************************************/
+
+
+#imageMenu {
+	position: relative;
+	width: 660px;
+	height: 200px;
+	overflow: hidden;
+}
+
+
+
+#imageMenu ul {
+	list-style: none;
+	margin: 0px;
+	display: block;
+	height: 200px;
+	width: 1000px;
+	
+	}
+
+#imageMenu ul li {
+	float: left;
+}
+
+#imageMenu ul li a {
+	text-indent: -1000px;
+	background:#FFFFFF none repeat scroll 0%;
+	/*border-right: 2px solid #000;*/
+	cursor:pointer;
+	display:block;
+	overflow:hidden;
+	width:60px;
+	height: 200px;
+}
+
+#imageMenu ul li.banner_1 a {
+	background: url(../../img_layout/banner_alpine.png) repeat scroll 0%;
+	
+}
+
+#imageMenu ul li.banner_2 a {
+	background: url(../../img_layout/banner_eb.png) repeat scroll 0%;
+}
+
+#imageMenu ul li.banner_3 a {
+	background: url(../../img_layout/banner_jl.png) repeat scroll 0%;
+}
+
+#imageMenu ul li.banner_4 a {
+	background: url(../../img_layout/banner_jvc.png) repeat scroll 0%;
+}
+
+#imageMenu ul li.banner_5 a {
+	background: url(../../img_layout/banner_kicker.png) repeat scroll 0%;
+	
+}
+
+#imageMenu ul li.banner_6 a {
+	background: url(../../img_layout/banner_parrot.png) repeat scroll 0%;
+}
+
+#imageMenu ul li.banner_7 a {
+	background: url(../../img_layout/banner_pioneer.png) repeat scroll 0%;
+}
+
+#imageMenu ul li.banner_8 a {
+	background: url(../../img_layout/banner_skyway.png) repeat scroll 0%;
+}
+
+#imageMenu ul li.banner_9 a {
+	background: url(../../img_layout/banner_tomtom.png) repeat scroll 0%;
+}
+
+#imageMenu ul li.banner_10 a {
+	background: url(../../img_layout/banner_zapco.png) repeat scroll 0%;
+	/*width: 310px;*/
+}
+
+.clear {
+	clear: both;
+}
+
+/*************************************************************/
+

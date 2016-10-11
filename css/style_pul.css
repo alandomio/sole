@@ -1,0 +1,148 @@
+@charset "utf-8"; 
+option.selected{color:#fd8402; font-weight:bold}
+#SWFUpload_0{cursor:pointer}
+.button, 
+.button_nuovo, 
+.button_elimina, 
+.button_elimina_solo, 
+.button_cerca, 
+.button_annulla, 
+#btnCancel, 
+.button_duplica, 
+.button_modifica, 
+.button_modifica_solo, 
+.button_salva, 
+.button_aggiorna, 
+.button_aggiungi, 
+.button_aggiungi_solo{background-color:#fff!important; cursor:pointer; text-align:left; padding:2px 0 2px 18px; border:1px solid #B5B8C8; -moz-border-radius:3px; -webkit-border-radius:3px; text-decoration:none}
+.button{text-align:center}
+.button:hover
+.button_nuovo:hover, 
+.button_elimina:hover, 
+.button_modifica:hover, 
+.button_modifica_solo:hover, 
+.button_elimina_solo:hover, 
+.button_cerca:hover, 
+.button_annulla:hover, 
+#btnCancel:hover, 
+.button_duplica:hover, 
+.button_salva:hover, 
+.button_aggiorna:hover, 
+.button_aggiungi:hover, 
+.button_aggiungi_solo:hover{border:1px solid #c5ddfb}
+.button{padding:0px 10px}
+.button_nuovo{background:url(../images/icon_nuovo.gif) left no-repeat}
+.button_elimina{background:url(../images/icon_elimina.gif) left no-repeat}
+.button_elimina_solo{background:url(../images/icon_elimina.gif) center center no-repeat; width:22px; padding:0}
+.button_cerca{background:url(../images/icon_find.gif) left no-repeat}
+.button_modifica{background:url(../images/icon_modifica.gif) left no-repeat}
+.button_modifica_solo{background:url(../images/icon_modifica.gif) center center no-repeat; width:22px; padding:0}
+.button_annulla{background:url(../images/icon_back_grigio.gif) left no-repeat #f6f6f6}
+.button_duplica{background:url(../images/icon_copy.gif) left no-repeat}
+.button_salva{background:url(../images/icon_salva.gif) left no-repeat}
+.button_aggiorna{background:url(../images/icon_change.gif) left no-repeat}
+.button_aggiungi{background:url(../images/icon_aggiungi_file.gif) left no-repeat}
+.button_aggiungi_solo{background:url(../images/icon_aggiungi_file.gif) center center no-repeat; width:22px; padding:0}
+.button_modifica_text, 
+.button_aggiungi_text{border:none; border-bottom:1px solid #000; background:url(../images/icon_modifica_transp.gif) left no-repeat transparent; padding:1px 0 1px 18px; text-align:left}
+.button_modifica_text:hover, 
+.button_aggiungi_text:hover{border-bottom:1px solid transparent}
+.button_modifica_text{background:url(../images/icon_modifica_transp.gif) left no-repeat transparent}
+.button_aggiungi_text{background:url(../images/icon_aggiungi_file.gif) left no-repeat transparent}
+.puls, 
+.puls_nwl, 
+.puls_cerca, 
+.puls_nuovo, 
+.puls_salva, 
+.puls_upload_file, 
+.puls_annulla, 
+.puls_back, 
+.puls_modifica, 
+.puls_elimina, 
+.puls_change, 
+.puls_selected, 
+.puls_selected_no, 
+.puls_duplica, 
+.puls_aggiungi, 
+.puls_acquista, 
+.puls_casa, 
+.puls_nautica, 
+.puls_motori, 
+.puls_incontri, 
+.puls_lavoro, 
+.puls_inviamail, 
+.puls_comproevendo, 
+.puls_trash{vertical-align:middle; display:inline; background-color:#fff; width:auto; height:22px; padding:3px 4px 3px 20px; border:1px solid #B5B8C8; text-decoration:none; -moz-border-radius:3px; -webkit-border-radius:3px; font-weight:normal; color:#333; font-size:11px}
+.puls{padding-left:4px}
+.puls_nwl{display:block; padding:1px 6px 1px 6px; margin:0 0 4px 0; height:16px; width:60px; background-color:#F7F7F7}
+.puls:hover, 
+.puls_nwl:hover, 
+.puls_cerca:hover, 
+.puls_nuovo:hover, 
+.puls_salva:hover, 
+.puls_upload:hover, 
+.puls_annulla_text:hover, 
+.puls_back:hover, 
+.puls_modifica:hover, 
+.puls_elimina:hover, 
+.puls_change:hover, 
+.puls_selected:hover, 
+.puls_selected_no:hover, 
+.puls_duplica:hover, 
+.puls_aggiungi:hover, 
+.puls_acquista:hover, 
+.puls_casa:hover, 
+.puls_nautica:hover, 
+.puls_motori:hover, 
+.puls_incontri:hover, 
+.puls_lavoro:hover, 
+.puls_inviamail:hover, 
+.puls_comproevendo:hover, 
+.puls_trash:hover{border:1px solid #c5ddfb; cursor:pointer}
+.ico_sel{font-size:13px!important; padding:4px 0; font-weight:bold!important}
+.puls_cerca{background:url(../images/icon_find.gif) left no-repeat #fff}
+.puls_salva{background:url(../images/icon_salva.gif) left no-repeat #fff}
+.puls_modifica{background:url(../images/icon_modifica_transp.gif) top left no-repeat #fff}
+.puls_upload_file{background:url(../images/icon_upload.gif) left no-repeat #fff; float:right}
+.puls_annulla{padding:0 4px; background:#f6f6f6; color:#666}
+.puls_nuovo{background:url(../images/icon_nuovo.gif) left no-repeat #fff; color:#000!important}
+.puls_back{background:url(../images/icon_back_grigio.gif) left no-repeat #fff}
+.puls_elimina{background:url(../images/icon_elimina.gif) left no-repeat #fff}
+.puls_change{background:url(../images/icon_change.gif) left no-repeat #fff}
+.puls_selected{background:url(../images/icon_select_si.gif) center center no-repeat #fff; width:22px}
+.puls_selected_no:hover{background:url(../images/icon_select_si.gif) center center no-repeat #fff; width:22px}
+.puls_selected_no{background:url(../images/icon_select_no.gif) center center no-repeat #fff; width:22px}
+.puls_duplica{background:url(../images/icon_copy.gif) left no-repeat #fff}
+.puls_aggiungi{background:url(../images/icon_aggiungi_file.gif) left no-repeat}
+.puls_acquista{background:url(../images/icon_aggiungi_file.gif) left no-repeat}
+.puls_inviamail{background:url(../images/send_mail.gif) left no-repeat}
+.puls_trash{background:url(../images/trash.gif) left no-repeat}
+a.puls_cancella_solo, a.puls_modifica_solo, a.puls_aggiungi_solo{vertical-align:middle; display:block; width:18px; height:18px; border-top:1px solid #caddf1; border-left:1px solid #caddf1; border-bottom:1px solid #38689e; border-right:1px solid #38689e}
+a.puls_cancella_solo span, a.puls_modifica_solo span, a.puls_aggiungi_solo span{display:none}
+a:hover.puls_cancella_solo, a:hover.puls_modifica_solo, a:hover.puls_aggiungi_solo{border-bottom:1px solid #caddf1; border-right:1px solid #caddf1; border-top:1px solid #38689e; border-left:1px solid #38689e}
+a.puls_cancella_solo{background:url(../images/icon_elimina.gif) center center no-repeat #fff}
+a.puls_modifica_solo{background:url(../images/icon_modifica.gif) center center no-repeat #fff}
+a.puls_aggiungi_solo{background:url(../images/icon_shopping_cart.gif) center center no-repeat #fff}
+a.puls_modifica_text, 
+a.puls_aggiungi_text, 
+a.puls_allegati_text, 
+a.puls_news_text, 
+a.puls_gestcontatti_text, 
+a.puls_mail_text{vertical-align:middle; color:#000; font-size:12px; font-weight:bold; border:medium none; padding:0 0 0 20px; text-align:left}
+a:hover.puls_modifica_text, 
+a:hover.puls_aggiungi_text, 
+a:hover.puls_allegati_text, 
+a:hover.puls_news_text, 
+a:hover.puls_gestcontatti_text, 
+a:hover.puls_mail_text{text-decoration:none}
+a.puls_modifica_text{background:transparent url(../images/icon_modifica_transp.gif) no-repeat left center}
+a.puls_aggiungi_text{background:transparent url(../images/icon_aggiungi_file.gif) no-repeat left center}
+a.puls_allegati_text{background:transparent url(../images/icon_allegati.gif) left center no-repeat}
+a.puls_news_text{background:url(../images/icon_news.gif) left center no-repeat}
+a.puls_gestcontatti_text{background:url(../images/icon_username.gif) left center no-repeat}
+a.puls_mail_text{background:url(../images/icon_msg.gif) left center no-repeat}
+.puls_dis{filter:alpha(opacity=60); -moz-opacity:0.60; opacity:0.60; border:1px solid #caddf1!important; cursor:auto}
+.puls_grande{font-family:"Trebuchet MS",Verdana,Arial; vertical-align:middle; display:inline!important; background-color:#fff!important; width:auto; font-size:12px; height:40px!important; padding:2px 6px 2px 6px!important; color:#000!important; border:1px solid #caddf1!important; text-decoration:none; border-bottom:1px solid #38689e!important; border-right:1px solid #38689e!important; font-weight:bold}
+.puls_grande:hover{border:1px solid #38689e!important; border-bottom:1px solid #caddf1!important; border-right:1px solid #caddf1!important; cursor:pointer}
+.img_puls{cursor:pointer}
+.action_puls{margin:0 0 10px 0}
